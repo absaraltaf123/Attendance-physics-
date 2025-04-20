@@ -1,6 +1,5 @@
 {
   "students": [
-   
     {"roll_no": "220361", "name": "ZAKIR HUSSAIN TAK", "course": "LINEAR ALGEBRA"},
     {"roll_no": "220362", "name": "NUMAN BASHIR DAR", "course": "LINEAR ALGEBRA"},
     {"roll_no": "220363", "name": "FAISAL AHMAD MIR", "course": "LINEAR ALGEBRA"},
@@ -22,5 +21,22 @@
     {"roll_no": "220429", "name": "MIR SURIYA NISAR", "course": "LINEAR ALGEBRA"},
     {"roll_no": "220430", "name": "SHAHNAWAZ AKBAR", "course": "LINEAR ALGEBRA"}
   ],
-  "attendance": {}
+  "attendance": {
+    "Quantum Mechanics": {
+      "2024-05-20": [
+        { "roll_no": "220361", "status": "present", "name": "ZAKIR HUSSAIN TAK" },
+        { "roll_no": "220362", "status": "absent", "name": "NUMAN BASHIR DAR" }
+      ]
+    },
+    "Statistical Physics": {
+      "2024-05-20": [
+        { "roll_no": "220361", "status": "present", "name": "ZAKIR HUSSAIN TAK" },
+        { "roll_no": "220362", "status": "present", "name": "NUMAN BASHIR DAR" }
+      ],
+       "2024-05-21": [
+         { "roll_no": "220361", "status": "present", "name": "ZAKIR HUSSAIN TAK" }
+       ]
+    },
+    "Electrodynamics": {}
+  }
 }
