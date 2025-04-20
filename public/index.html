@@ -514,7 +514,7 @@
         <div class="content">
             <!-- Attendance Page -->
             <div id="attendance-page" class="page active">
-                <h1>Daily Attendance (View Only)</h1>
+                <h1>Semester 6 (physics) </h1>
                 <div class="date-selector">
                     <input type="date" id="attendance-date" class="date-input">
                     <div>
@@ -941,7 +941,7 @@
                             <td data-label="Roll No">${rollNo}</td>
                             <td data-label="Name">${metrics.name}</td>
                             <td data-label="Present">${metrics.present}</td>
-                            <td data-label="Absent">${totalClasses - metrics.present}</td> {/* Calculated absent */}
+                            <td data-label="Absent">${totalClasses - metrics.present}</td> 
                             <td data-label="Attend %" class="${percentClass}">${attendancePercent.toFixed(1)}%</td>
                         `;
                         metricsTbody.appendChild(row);
