@@ -1,6 +1,6 @@
 {
   "students": [
-    {"roll_no": "220351", "name": "MOHD ANSARY", "course": "LINEAR ALGEBRA"},
+   
     {"roll_no": "220361", "name": "ZAKIR HUSSAIN TAK", "course": "LINEAR ALGEBRA"},
     {"roll_no": "220362", "name": "NUMAN BASHIR DAR", "course": "LINEAR ALGEBRA"},
     {"roll_no": "220363", "name": "FAISAL AHMAD MIR", "course": "LINEAR ALGEBRA"},
