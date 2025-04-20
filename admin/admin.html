@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Admin</title>
+    <style>
+        /* Embedded CSS Start */
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #4a90e2; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        .section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }
+        .section:last-child { border-bottom: none; margin-bottom: 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="date"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s ease;
+        }
+        .btn-primary { background-color: #4a90e2; color: white; }
+        .btn-primary:hover { background-color: #357abd; }
+        .btn-secondary { background-color: #50c878; color: white; }
+        .btn-secondary:hover { background-color: #42a866; }
+        .btn-danger { background-color: #ff6b6b; color: white; margin-left: 5px;}
+        .btn-danger:hover { background-color: #e74c3c; }
+        .btn-print { background-color: #f39c12; color: white; }
+        .btn-print:hover { background-color: #e67e22; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f9f9f9; font-weight: bold; }
+        td select { margin-bottom: 0; padding: 6px 10px; } /* Smaller select in table */
+        .student-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .student-list-item:last-child { border-bottom: none; }
+        .error { color: #ff6b6b; margin-top: 10px; font-weight: bold; display: none; /* Hidden by default */ }
+        .success { color: #50c878; margin-top: 10px; font-weight: bold; display: none; /* Hidden by default */ }
+         /* Loading indicator */
+        #admin-loading { display: none; margin-top: 15px; font-style: italic; color: #555; }
+        #admin-loading.active { display: block; }
+        #student-list-loading { display: none; color: #555; margin-bottom: 10px;}
+         /* Print specific styles */
+        @media print {
+            body * { visibility: hidden; }
+            #print-section, #print-section * { visibility: visible; }
+            #print-section { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; margin: 0; box-shadow: none; border: none;}
+            button, input, label, h1 { display: none !important; } /* Hide buttons/inputs in print */
+            h2, h3 { margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #ccc;}
+            table { margin-top: 5px; width: 100%; border: 1px solid #ccc; }
+            th, td { font-size: 10pt; padding: 5px; border: 1px solid #eee;}
+            th { background-color: #eee; }
+            .container { box-shadow: none; border: none; padding: 0;}
+        }
+        /* Embedded CSS End */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Attendance Admin</h1>
+
+        <!-- Manage Students Section -->
+        <div class="section">
+            <h2>Manage Students</h2>
+            <div id="student-error" class="error"></div>
+            <div id="student-success" class="success"></div>
+            <div>
+                <label for="new-rollno">Roll No:</label>
+                <input type="text" id="new-rollno">
+            </div>
+            <div>
+                <label for="new-name">Name:</label>
+                <input type="text" id="new-name">
+            </div>
+            <button id="add-student-btn" class="btn-primary">Add Student</button>
+
+            <h3>Current Students</h3>
+             <div id="student-list-loading">Loading students...</div>
+            <div id="student-list">
+                <!-- Student list items will be added here by JS -->
+            </div>
+        </div>
+
+        <!-- Mark Attendance Section -->
+        <div class="section">
+            <h2>Mark Attendance</h2>
+            <div id="attendance-error" class="error"></div>
+            <div id="attendance-success" class="success"></div>
+            <div>
+                <label for="admin-attendance-date">Date:</label>
+                <input type="date" id="admin-attendance-date">
+            </div>
+            <button id="admin-load-btn" class="btn-primary">Load/Refresh for Date</button>
+            <button id="admin-save-btn" class="btn-secondary">Save Attendance</button>
+            <div id="admin-loading">Loading attendance...</div>
+
+            <table id="admin-attendance-table">
+                <thead>
+                    <tr>
+                        <th>Roll No</th>
+                        <th>Student Name</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-attendance-tbody">
+                    <!-- Attendance rows will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+
+         <!-- Print Attendance Section -->
+        <div class="section">
+            <h2>Print Attendance List</h2>
+            <div id="print-error" class="error"></div>
+             <div>
+                <label for="print-date">Date to Print:</label>
+                <input type="date" id="print-date">
+            </div>
+            <button id="print-btn" class="btn-print">Prepare & Print List</button>
+        </div>
+
+    </div>
+
+    <!-- Hidden section for printing content -->
+    <div id="print-section" style="display: none;">
+         <h2 id="print-title">Attendance List</h2>
+         <h3 id="print-date-display">Date:</h3>
+         <table id="print-table">
+             <thead>
+                 <tr><th>Roll No</th><th>Name</th><th>Status</th></tr>
+             </thead>
+             <tbody id="print-tbody"></tbody>
+         </table>
+    </div>
+
+
+    <script>
+        // Embedded JavaScript Start
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const studentListDiv = document.getElementById('student-list');
+            const addStudentBtn = document.getElementById('add-student-btn');
+            const newRollnoInput = document.getElementById('new-rollno');
+            const newNameInput = document.getElementById('new-name');
+            const studentErrorDiv = document.getElementById('student-error');
+            const studentSuccessDiv = document.getElementById('student-success');
+            const studentListLoading = document.getElementById('student-list-loading');
+
+            const adminAttendanceDateInput = document.getElementById('admin-attendance-date');
+            const adminLoadBtn = document.getElementById('admin-load-btn');
+            const adminSaveBtn = document.getElementById('admin-save-btn');
+            const adminAttendanceTbody = document.getElementById('admin-attendance-tbody');
+            const attendanceErrorDiv = document.getElementById('attendance-error');
+            const attendanceSuccessDiv = document.getElementById('attendance-success');
+            const adminLoadingDiv = document.getElementById('admin-loading');
+
+            const printDateInput = document.getElementById('print-date');
+            const printBtn = document.getElementById('print-btn');
+            const printErrorDiv = document.getElementById('print-error');
+            const printSectionDiv = document.getElementById('print-section');
+            const printTitleH2 = document.getElementById('print-title');
+            const printDateDisplayH3 = document.getElementById('print-date-display');
+            const printTbody = document.getElementById('print-tbody');
+
+            let currentAdminStudents = []; // Cache students for admin view
+
+            // --- Utility Functions ---
+            function showAdminLoading(show = true) {
+                adminLoadingDiv.classList.toggle('active', show);
+            }
+            function showStudentListLoading(show = true) {
+                studentListLoading.style.display = show ? 'block' : 'none';
+            }
+
+            function displayMessage(element, message, isError = true) {
+                if (!element) return; // Guard against null elements
+                element.textContent = message;
+                element.className = isError ? 'error' : 'success';
+                element.style.display = message ? 'block' : 'none';
+                // Auto-hide success messages after a delay
+                if (!isError && message) {
+                    setTimeout(() => {
+                        if (element.textContent === message) { // Only hide if message hasn't changed
+                             element.textContent = '';
+                             element.style.display = 'none';
+                        }
+                    }, 3500); // Slightly longer timeout
+                }
+            }
+
+            // --- API Fetch Wrapper ---
+            async function fetchAdminData(url, options = {}, showLoadingIndicator = true) {
+                if (showLoadingIndicator) showAdminLoading(true);
+                // Clear previous messages before fetch
+                displayMessage(studentErrorDiv, '', false);
+                displayMessage(attendanceErrorDiv, '', false);
+                displayMessage(printErrorDiv, '', false);
+
+                try {
+                    const response = await fetch(url, options);
+                    const isJson = response.headers.get('content-type')?.includes('application/json');
+                    const data = isJson ? await response.json() : await response.text();
+
+                    if (!response.ok) {
+                         let errorMsg = `HTTP error ${response.status}`;
+                         if(isJson && data.message) {
+                             errorMsg += `: ${data.message}`;
+                         } else if (!isJson && typeof data === 'string' && data.length < 200) {
+                             errorMsg += `: ${data}`;
+                         }
+                        throw new Error(errorMsg);
+                    }
+                    return data;
+                } catch (error) {
+                    console.error(`Admin Fetch error for ${url}:`, error);
+                    // Display error in a relevant section
+                    let errorTargetDiv = attendanceErrorDiv; // Default
+                    if (url.includes('/api/students')) errorTargetDiv = studentErrorDiv;
+                    else if (url.includes('/api/attendance') && options.method !== 'POST') errorTargetDiv = attendanceErrorDiv;
+                    else if (url.includes('print')) errorTargetDiv = printErrorDiv;
+                     else if (url.includes('/api/attendance') && options.method === 'POST') errorTargetDiv = attendanceErrorDiv; // Show save errors too
+
+                    displayMessage(errorTargetDiv, `API Error: ${error.message}`);
+                    throw error;
+                } finally {
+                   if (showLoadingIndicator) showAdminLoading(false);
+                }
+            }
+
+
+            // --- Student Management ---
+            async function loadStudents() {
+                 showStudentListLoading(true);
+                 displayMessage(studentErrorDiv, '', false);
+                 studentListDiv.innerHTML = '';
+                 try {
+                    // Use the API wrapper, but hide the main loading indicator
+                    currentAdminStudents = await fetchAdminData('/api/students', {}, false);
+                    if (currentAdminStudents && currentAdminStudents.length > 0) {
+                        currentAdminStudents.sort((a, b) => a.roll_no.localeCompare(b.roll_no));
+                        currentAdminStudents.forEach(student => {
+                            const div = document.createElement('div');
+                            div.className = 'student-list-item';
+                            div.innerHTML = `
+                                <span>${student.roll_no} - ${student.name}</span>
+                                <button class="btn-danger" data-roll="${student.roll_no}">Delete</button>
+                            `;
+                            div.querySelector('button').addEventListener('click', handleDeleteStudent);
+                            studentListDiv.appendChild(div);
+                        });
+                    } else {
+                        studentListDiv.innerHTML = '<p>No students found.</p>';
+                    }
+                 } catch (error) {
+                     // Error already displayed by fetchAdminData in studentErrorDiv
+                     studentListDiv.innerHTML = '<p style="color: red;">Failed to load students list.</p>';
+                 } finally {
+                    showStudentListLoading(false);
+                 }
+            }
+
+            async function handleAddStudent() {
+                const rollNo = newRollnoInput.value.trim();
+                const name = newNameInput.value.trim();
+                displayMessage(studentErrorDiv, '', false);
+                displayMessage(studentSuccessDiv, '', false);
+
+                if (!rollNo || !name) {
+                    displayMessage(studentErrorDiv, 'Roll No and Name cannot be empty.');
+                    return;
+                }
+
+                try {
+                    const newStudent = await fetchAdminData('/api/students', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ roll_no: rollNo, name: name })
+                    }, true); // Show loading for this action
+                    displayMessage(studentSuccessDiv, `Student ${newStudent.name} added successfully.`, false);
+                    newRollnoInput.value = '';
+                    newNameInput.value = '';
+                    await loadStudents(); // Refresh the list (await ensures it finishes)
+                    await loadAttendanceForEditing(); // Also refresh attendance table if date is selected
+                } catch (error) {
+                     // Error message handled by fetchAdminData
+                     console.error("Add student failed:", error);
+                }
+            }
+
+            async function handleDeleteStudent(event) {
+                const rollNo = event.target.dataset.roll;
+                if (!rollNo) return;
+
+                // Find student name for confirmation message
+                const studentToDelete = currentAdminStudents.find(s => s.roll_no === rollNo);
+                const confirmMsg = studentToDelete
+                  ? `Are you sure you want to delete student ${studentToDelete.name} (${rollNo})? This cannot be undone.`
+                  : `Are you sure you want to delete student ${rollNo}? This cannot be undone.`;
+
+
+                if (!confirm(confirmMsg)) {
+                    return;
+                }
+
+                displayMessage(studentErrorDiv, '', false);
+                displayMessage(studentSuccessDiv, '', false);
+
+                try {
+                     await fetchAdminData(`/api/students/${rollNo}`, { method: 'DELETE' }, true); // Show loading
+                    displayMessage(studentSuccessDiv, `Student ${rollNo} deleted successfully.`, false);
+                    await loadStudents(); // Refresh the list
+                    await loadAttendanceForEditing(); // Also refresh attendance table if date is selected
+                } catch (error) {
+                    // Error handled by fetchAdminData
+                    console.error("Delete student failed:", error);
+                }
+            }
+
+            // --- Attendance Management ---
+            async function loadAttendanceForEditing() {
+                const date = adminAttendanceDateInput.value;
+                displayMessage(attendanceErrorDiv, '', false);
+                displayMessage(attendanceSuccessDiv, '', false);
+                adminAttendanceTbody.innerHTML = '';
+
+                if (!date) {
+                    displayMessage(attendanceErrorDiv, 'Please select a date to load attendance.');
+                    return;
+                }
+
+                // Ensure student list is current
+                if (!currentAdminStudents || currentAdminStudents.length === 0) {
+                     try {
+                         console.log("Student list empty or outdated, reloading...");
+                         await loadStudents(); // Try reloading students first
+                         if (!currentAdminStudents || currentAdminStudents.length === 0) {
+                            displayMessage(attendanceErrorDiv, 'Cannot load attendance: Student list is empty or failed to load.');
+                            return;
+                         }
+                     } catch {
+                         displayMessage(attendanceErrorDiv, 'Cannot load attendance: Failed to load student list.');
+                        return;
+                     }
+                }
+
+                showAdminLoading(true);
+                try {
+                    const existingAttendance = await fetchAdminData(`/api/attendance/${date}`, {}, false); // Use API wrapper
+
+                    adminAttendanceTbody.innerHTML = ''; // Clear just before populating
+                     currentAdminStudents.forEach(student => {
+                         const existingRecord = existingAttendance.find(att => att.roll_no === student.roll_no);
+                         const currentStatus = existingRecord ? existingRecord.status : 'absent'; // Default to absent
+
+                         const row = document.createElement('tr');
+                         row.innerHTML = `
+                            <td>${student.roll_no}</td>
+                            <td>${student.name}</td>
+                            <td>
+                                <select class="attendance-select" data-roll="${student.roll_no}">
+                                    <option value="present" ${currentStatus === 'present' ? 'selected' : ''}>Present</option>
+                                    <option value="absent" ${currentStatus === 'absent' ? 'selected' : ''}>Absent</option>
+                                </select>
+                            </td>
+                         `;
+                         adminAttendanceTbody.appendChild(row);
+                     });
+                     if (existingAttendance.length > 0) {
+                        displayMessage(attendanceSuccessDiv, `Loaded existing attendance for ${date}.`, false);
+                     } else {
+                        displayMessage(attendanceSuccessDiv, `Loaded students for ${date}. Defaulted to 'Absent'.`, false);
+                     }
+
+                } catch (error) {
+                     // Error already displayed by fetchAdminData
+                     adminAttendanceTbody.innerHTML = `<tr><td colspan="3" style="color:red;">Error loading attendance table.</td></tr>`;
+                } finally {
+                    showAdminLoading(false);
+                }
+            }
+
+
+            async function handleSaveAttendance() {
+                const date = adminAttendanceDateInput.value;
+                displayMessage(attendanceErrorDiv, '', false);
+                displayMessage(attendanceSuccessDiv, '', false);
+
+                if (!date) {
+                    displayMessage(attendanceErrorDiv, 'Please select a date before saving.');
+                    return;
+                }
+
+                const selects = adminAttendanceTbody.querySelectorAll('select.attendance-select');
+                if (selects.length === 0) {
+                     displayMessage(attendanceErrorDiv, 'No students loaded to save attendance for. Click "Load/Refresh for Date" first.');
+                     return;
+                }
+
+                let attendanceList = [];
+                selects.forEach(select => {
+                     const rollNo = select.dataset.roll;
+                     const student = currentAdminStudents.find(s => s.roll_no === rollNo);
+                     attendanceList.push({
+                         roll_no: rollNo,
+                         name: student ? student.name : 'Unknown Student',
+                         status: select.value
+                     });
+                });
+
+                try {
+                    const result = await fetchAdminData(`/api/attendance/${date}`, {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify(attendanceList)
+                    }, true); // Show loading
+                     displayMessage(attendanceSuccessDiv, result.message || `Attendance for ${date} saved successfully.`, false);
+                } catch (error) {
+                     // Error message handled by fetchAdminData
+                     console.error("Save attendance failed:", error);
+                }
+            }
+
+             // --- Print Functionality ---
+            async function handlePrint() {
+                const date = printDateInput.value;
+                displayMessage(printErrorDiv, '', false);
+                printTbody.innerHTML = '';
+
+                if (!date) {
+                    displayMessage(printErrorDiv, 'Please select a date to print.');
+                    return;
+                }
+
+                showAdminLoading(true);
+                try {
+                     const attendanceToPrint = await fetchAdminData(`/api/attendance/${date}`, {}, false); // Use API wrapper
+
+                    if (!attendanceToPrint || attendanceToPrint.length === 0) {
+                         displayMessage(printErrorDiv, `No attendance records found for ${date} to print.`);
+                         return; // Stop here
+                    }
+
+                     printDateDisplayH3.textContent = `Date: ${date}`;
+                     printTbody.innerHTML = '';
+
+                     attendanceToPrint.sort((a,b) => a.roll_no.localeCompare(b.roll_no)).forEach(record => {
+                         const row = document.createElement('tr');
+                         row.innerHTML = `
+                             <td>${record.roll_no}</td>
+                             <td>${record.name || 'N/A'}</td>
+                             <td>${record.status === 'present' ? 'Present' : 'Absent'}</td>
+                         `;
+                         printTbody.appendChild(row);
+                     });
+
+                     // Wait a tiny moment for DOM to update before printing
+                     setTimeout(() => {
+                         printSectionDiv.style.display = 'block';
+                         window.print();
+                         printSectionDiv.style.display = 'none';
+                     }, 100);
+
+
+                } catch (error) {
+                    // Error already displayed by fetchAdminData
+                    console.error("Print preparation failed:", error);
+                } finally {
+                     showAdminLoading(false);
+                }
+            }
+
+            // --- Initialization ---
+            function initAdmin() {
+                console.log("Initializing Admin Interface...");
+                const today = new Date().toISOString().split('T')[0];
+                adminAttendanceDateInput.value = today;
+                printDateInput.value = today;
+
+                addStudentBtn.addEventListener('click', handleAddStudent);
+                adminLoadBtn.addEventListener('click', loadAttendanceForEditing);
+                adminSaveBtn.addEventListener('click', handleSaveAttendance);
+                printBtn.addEventListener('click', handlePrint);
+
+                // Delegate delete button clicks from the student list container
+                 studentListDiv.addEventListener('click', (event) => {
+                    if (event.target.tagName === 'BUTTON' && event.target.dataset.roll) {
+                        handleDeleteStudent(event);
+                    }
+                 });
+
+                loadStudents(); // Load initial student list on page load
+            }
+
+            initAdmin();
+        });
+        // Embedded JavaScript End
+    </script>
+</body>
+</html>
