@@ -15,15 +15,7 @@ let dataCache = null; // Simple in-memory cache
 async function loadData() {
     console.log("Attempting to load data...");
     try {
-        // Check cache first (optional, but can reduce reads)
-        // NOTE: Forcing read from file for debugging consistency after save issues.
-        // Remove comment below to re-enable cache reads.
-        /*
-        if (dataCache) {
-             console.log("Serving data from cache");
-             return dataCache;
-        }
-        */
+        // Force read from file for consistency
         console.log("Reading data file from:", DATA_FILE);
         const fileContent = await fs.readFile(DATA_FILE, 'utf-8');
         console.log("Data file read successfully.");
@@ -33,50 +25,49 @@ async function loadData() {
             console.log("Data file parsed successfully.");
         } catch (parseError) {
             console.error('!!! CRITICAL: Error parsing data.json:', parseError);
-            console.error('!!! Data file content was:', fileContent); // Log content if parse fails
+            console.error('!!! Data file content was:', fileContent);
             console.log('!!! Returning default structure due to parse error.');
-            dataCache = { students: [], attendance: {} }; // Use default on parse error
+            // Ensure the default structure has an empty attendance object
+            dataCache = { students: [], attendance: {} };
         }
 
-        // Ensure basic structure exists even if file was valid JSON but empty/missing keys
-        if (!dataCache) dataCache = { students: [], attendance: {} }; // Should be caught by parseError ideally
+        // Ensure basic structure exists
+        if (!dataCache) dataCache = { students: [], attendance: {} };
         if (!dataCache.students) dataCache.students = [];
-        if (!dataCache.attendance) dataCache.attendance = {};
+        if (!dataCache.attendance) dataCache.attendance = {}; // Ensure attendance object exists
 
-        console.log(`Data loaded: ${dataCache.students.length} students, ${Object.keys(dataCache.attendance).length} attendance dates.`);
+        console.log(`Data loaded: ${dataCache.students.length} students, ${Object.keys(dataCache.attendance).length} subjects.`);
         return dataCache;
 
     } catch (error) {
         if (error.code === 'ENOENT') {
             console.log('Data file not found (ENOENT). Creating default file.');
+            // Ensure the default structure has an empty attendance object
             dataCache = { students: [], attendance: {} };
             try {
-                await saveData(dataCache); // Attempt to save the default structure right away
+                await saveData(dataCache);
                 console.log('Default data file created successfully.');
             } catch (saveError) {
                 console.error('!!! CRITICAL: Failed to save default data file:', saveError);
-                // Still return default structure so server can try to run
             }
         } else {
             console.error('!!! CRITICAL: Error reading data file:', error);
             console.log('!!! Returning default structure due to read error.');
-            dataCache = { students: [], attendance: {} }; // Use default on other read errors
+            dataCache = { students: [], attendance: {} };
         }
-        return dataCache; // Return default structure on any read error
+        return dataCache;
     }
 }
 
 async function saveData(data) {
-    const dataString = JSON.stringify(data, null, 2); // Pretty print JSON
+    const dataString = JSON.stringify(data, null, 2);
     console.log("Attempting to save data to file:", DATA_FILE);
-    // console.log("Data to save:", dataString); // Uncomment for detailed debug if needed
     try {
         await fs.writeFile(DATA_FILE, dataString, 'utf-8');
         dataCache = data; // Update cache *only after* successful save
         console.log("Data saved successfully to file.");
     } catch (error) {
         console.error('!!! CRITICAL: Error writing data file:', error);
-        // Re-throw so the calling function knows it failed
         throw new Error('Failed to save data to the server file.');
     }
 }
@@ -90,7 +81,7 @@ app.get('/ping', (req, res) => {
 
 // --- API Endpoints ---
 
-// Get all students
+// Get all students (Unchanged)
 app.get('/api/students', async (req, res) => {
     console.log(`--> GET /api/students request received at ${new Date().toISOString()}`);
     try {
@@ -104,7 +95,7 @@ app.get('/api/students', async (req, res) => {
     console.log(`<-- GET /api/students response sent.`);
 });
 
-// Add a student
+// Add a student (Unchanged)
 app.post('/api/students', async (req, res) => {
     console.log(`--> POST /api/students request received at ${new Date().toISOString()}`);
     console.log("Request body:", req.body);
@@ -124,9 +115,9 @@ app.post('/api/students', async (req, res) => {
 
         const newStudent = { roll_no, name, course: course || "N/A" };
         data.students.push(newStudent);
-        data.students.sort((a, b) => (a.roll_no || '').localeCompare(b.roll_no || '')); // Keep sorted, handle potential undefined roll_no
+        data.students.sort((a, b) => (a.roll_no || '').localeCompare(b.roll_no || ''));
 
-        await saveData(data); // Save the updated data
+        await saveData(data);
         console.log(`Student ${roll_no} added successfully.`);
         res.status(201).json(newStudent);
 
@@ -137,7 +128,7 @@ app.post('/api/students', async (req, res) => {
      console.log(`<-- POST /api/students response sent.`);
 });
 
-// Remove a student
+// Remove a student (UPDATED to iterate through subjects)
 app.delete('/api/students/:roll_no', async (req, res) => {
     const roll_no_to_delete = req.params.roll_no;
     console.log(`--> DELETE /api/students/${roll_no_to_delete} request received at ${new Date().toISOString()}`);
@@ -152,17 +143,30 @@ app.delete('/api/students/:roll_no', async (req, res) => {
         }
 
         console.log(`Student ${roll_no_to_delete} found, removing...`);
-        // Also remove student from existing attendance records
+        // Also remove student from existing attendance records across all subjects
         let attendanceChanged = false;
-        Object.keys(data.attendance).forEach(date => {
-            const initialAttLength = data.attendance[date].length;
-            data.attendance[date] = data.attendance[date].filter(att => att.roll_no !== roll_no_to_delete);
-            if (data.attendance[date].length < initialAttLength) {
-                attendanceChanged = true;
-            }
+        // Iterate through each subject in the attendance object
+        Object.keys(data.attendance).forEach(subject => {
+            // Iterate through each date within the subject
+            Object.keys(data.attendance[subject]).forEach(date => {
+                const initialAttLength = data.attendance[subject][date].length;
+                data.attendance[subject][date] = data.attendance[subject][date].filter(att => att.roll_no !== roll_no_to_delete);
+                if (data.attendance[subject][date].length < initialAttLength) {
+                    attendanceChanged = true;
+                }
+                // Optional: Clean up empty date entries if desired
+                // if (data.attendance[subject][date].length === 0) {
+                //     delete data.attendance[subject][date];
+                // }
+            });
+             // Optional: Clean up empty subject entries if desired
+             // if (Object.keys(data.attendance[subject]).length === 0) {
+             //     delete data.attendance[subject];
+             // }
         });
+
          if (attendanceChanged) {
-            console.log(`Removed attendance records for student ${roll_no_to_delete}.`);
+            console.log(`Removed attendance records for student ${roll_no_to_delete} across subjects.`);
          }
 
         await saveData(data);
@@ -176,14 +180,13 @@ app.delete('/api/students/:roll_no', async (req, res) => {
     console.log(`<-- DELETE /api/students/${roll_no_to_delete} response sent.`);
 });
 
-// Get all attendance data (for frontend initial load)
+// Get all attendance data (UPDATED to return the nested structure)
 app.get('/api/attendance', async (req, res) => {
     console.log(`--> GET /api/attendance request received at ${new Date().toISOString()}`);
     try {
         const data = await loadData();
-        const attendanceData = data.attendance || {};
-        console.log(`Sending attendance data for ${Object.keys(attendanceData).length} dates.`);
-        // console.log("DEBUG: Sending /api/attendance response. Data:", JSON.stringify(attendanceData)); // Uncomment for detailed debug
+        const attendanceData = data.attendance || {}; // Ensure it's an object
+        console.log(`Sending attendance data for ${Object.keys(attendanceData).length} subjects.`);
         res.json(attendanceData);
     } catch (error) {
         console.error('!!! Error in GET /api/attendance:', error);
@@ -192,39 +195,55 @@ app.get('/api/attendance', async (req, res) => {
     console.log(`<-- GET /api/attendance response sent.`);
 });
 
-// Get attendance for a specific date (for admin loading)
-app.get('/api/attendance/:date', async (req, res) => {
+// Get attendance for a specific subject and date (NEW/MODIFIED endpoint)
+app.get('/api/attendance/:subject/:date', async (req, res) => {
+    const subject = decodeURIComponent(req.params.subject); // Decode subject name
     const date = req.params.date;
-    console.log(`--> GET /api/attendance/${date} request received at ${new Date().toISOString()}`);
+    console.log(`--> GET /api/attendance/${subject}/${date} request received at ${new Date().toISOString()}`);
     try {
         // Basic date validation (YYYY-MM-DD)
         if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
             console.log(`Validation failed: Invalid date format ${date}.`);
             return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD." });
         }
+        // Basic subject validation (non-empty)
+        if (!subject) {
+            console.log(`Validation failed: Subject parameter is missing.`);
+            return res.status(400).json({ message: "Subject is required." });
+        }
+
         const data = await loadData();
-        const dateData = data.attendance[date] || [];
-        console.log(`Sending ${dateData.length} attendance records for date ${date}.`);
-        res.json(dateData); // Return empty array if date not found
+        // Access nested data safely
+        const dateData = data.attendance?.[subject]?.[date] || [];
+        console.log(`Sending ${dateData.length} attendance records for subject ${subject} on date ${date}.`);
+        res.json(dateData); // Return empty array if subject or date not found
+
     } catch (error) {
-        console.error(`!!! Error in GET /api/attendance/${date}:`, error);
-        res.status(500).json({ message: "Error loading attendance data for the date." });
+        console.error(`!!! Error in GET /api/attendance/${subject}/${date}:`, error);
+        res.status(500).json({ message: "Error loading attendance data for the subject and date." });
     }
-     console.log(`<-- GET /api/attendance/${date} response sent.`);
+     console.log(`<-- GET /api/attendance/${subject}/${date} response sent.`);
 });
 
-// Save/Update attendance for a specific date
-app.post('/api/attendance/:date', async (req, res) => {
+// Save/Update attendance for a specific subject and date (MODIFIED endpoint)
+app.post('/api/attendance/:subject/:date', async (req, res) => {
+    const subject = decodeURIComponent(req.params.subject); // Decode subject name
     const date = req.params.date;
-    console.log(`--> POST /api/attendance/${date} request received at ${new Date().toISOString()}`);
-    console.log("Request body:", JSON.stringify(req.body)); // Log received data
+    console.log(`--> POST /api/attendance/${subject}/${date} request received at ${new Date().toISOString()}`);
+    console.log("Request body:", JSON.stringify(req.body));
     try {
+        // Date validation
         if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
              console.log(`Validation failed: Invalid date format ${date}.`);
-             return res.status(400).json({ message: "Invalid date format. Use YNNN-MM-DD." });
+             return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD." });
         }
-        const attendanceList = req.body; // Expecting an array of {roll_no, status}
+        // Subject validation
+        if (!subject) {
+            console.log(`Validation failed: Subject parameter is missing.`);
+            return res.status(400).json({ message: "Subject is required." });
+        }
 
+        const attendanceList = req.body;
         if (!Array.isArray(attendanceList)) {
             console.log("Validation failed: Request body is not an array.");
             return res.status(400).json({ message: "Invalid data format. Expected an array." });
@@ -236,7 +255,6 @@ app.post('/api/attendance/:date', async (req, res) => {
             item && typeof item.roll_no === 'string' && item.roll_no.trim() !== '' &&
             typeof item.status === 'string' && validStatuses.includes(item.status)
         );
-
         if (!isValid) {
             console.log("Validation failed: Invalid data within the attendance list array.");
             return res.status(400).json({ message: "Invalid attendance data in the list. Each item must have non-empty roll_no and a valid status ('present' or 'absent')." });
@@ -244,61 +262,72 @@ app.post('/api/attendance/:date', async (req, res) => {
 
         const data = await loadData();
 
-        // Add student names to the saved data (optional, but good for print view)
+        // Enrich attendance with names (filter out entries for non-existent students)
         const enrichedAttendance = attendanceList.map(att => {
             const student = data.students.find(s => s.roll_no === att.roll_no);
-            // Only include entries for students that actually exist in the student list
             if (student) {
-                return { ...att, name: student.name };
+                return { ...att, name: student.name }; // Include name for consistency
             }
-            return null; // Mark for filtering
-        }).filter(Boolean); // Remove null entries if student didn't exist
+            return null;
+        }).filter(Boolean); // Remove nulls
 
-        console.log(`Updating attendance for ${date} with ${enrichedAttendance.length} valid records.`);
-        data.attendance[date] = enrichedAttendance; // Update the specific date
+        // Ensure the subject key exists in attendance
+        if (!data.attendance[subject]) {
+            console.log(`Subject '${subject}' not found in data, creating it.`);
+            data.attendance[subject] = {};
+        }
+
+        console.log(`Updating attendance for subject '${subject}', date '${date}' with ${enrichedAttendance.length} valid records.`);
+        data.attendance[subject][date] = enrichedAttendance; // Update the specific subject and date
+
         await saveData(data); // Save the entire updated data object
 
-        console.log(`Attendance for ${date} saved successfully.`);
-        res.status(200).json({ message: `Attendance for ${date} saved successfully.` });
+        console.log(`Attendance for subject '${subject}' on date '${date}' saved successfully.`);
+        res.status(200).json({ message: `Attendance for ${subject} on ${date} saved successfully.` });
 
     } catch (error) {
-        console.error(`!!! Error in POST /api/attendance/${date}:`, error);
-        // Check if the error came from saveData
+        console.error(`!!! Error in POST /api/attendance/${subject}/${date}:`, error);
         if (error.message === 'Failed to save data to the server file.') {
              res.status(500).json({ message: "Server failed to save the attendance data file." });
         } else {
              res.status(500).json({ message: error.message || "Error saving attendance data." });
         }
     }
-     console.log(`<-- POST /api/attendance/${date} response sent.`);
+     console.log(`<-- POST /api/attendance/${subject}/${date} response sent.`);
 });
 
-// Generate Printable HTML for a date
-app.get('/admin/print/:date', async (req, res) => {
+// Generate Printable HTML for a subject and date (MODIFIED endpoint)
+app.get('/admin/print/:subject/:date', async (req, res) => {
+    const subject = decodeURIComponent(req.params.subject);
     const date = req.params.date;
-    console.log(`--> GET /admin/print/${date} request received at ${new Date().toISOString()}`);
+    console.log(`--> GET /admin/print/${subject}/${date} request received at ${new Date().toISOString()}`);
     try {
          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
              console.log(`Validation failed: Invalid date format ${date}.`);
              return res.status(400).send("Invalid date format. Use YYYY-MM-DD.");
          }
+         if (!subject) {
+            console.log(`Validation failed: Subject parameter is missing.`);
+            return res.status(400).send("Subject is required.");
+         }
+
         const data = await loadData();
-        const attendanceList = data.attendance[date] || [];
+        const attendanceList = data.attendance?.[subject]?.[date] || [];
         const presentStudents = attendanceList.filter(s => s.status === 'present');
-        const totalStudents = data.students?.length || 0; // Handle case where students array might be missing
+        const totalStudents = data.students?.length || 0;
 
-        console.log(`Generating print view for ${date}: ${presentStudents.length} present out of ${totalStudents} total students.`);
+        console.log(`Generating print view for Subject: ${subject}, Date: ${date}: ${presentStudents.length} present out of ${totalStudents} total students.`);
 
-        // Simple HTML for printing (same as before)
+        // Simple HTML for printing
         let html = `
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
-                <title>Attendance Printout - ${date}</title>
+                <title>Attendance Printout - ${subject} - ${date}</title>
                 <style>
                     body { font-family: sans-serif; margin: 20px; }
-                    h1, h2 { text-align: center; }
+                    h1, h2, h3 { text-align: center; }
                     table { width: 80%; margin: 20px auto; border-collapse: collapse; border: 1px solid #ccc; }
                     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
                     th { background-color: #f2f2f2; }
@@ -311,8 +340,9 @@ app.get('/admin/print/:date', async (req, res) => {
             </head>
             <body>
                 <h1>Student Attendance</h1>
-                <h2>Date: ${date}</h2>
-                <h2>Present Students (${presentStudents.length} / ${totalStudents})</h2>
+                <h2>Subject: ${subject}</h2>
+                <h3>Date: ${date}</h3>
+                <h4>Present Students (${presentStudents.length} / ${totalStudents})</h4>
                 ${presentStudents.length > 0 ? `
                 <table>
                     <thead>
@@ -324,7 +354,7 @@ app.get('/admin/print/:date', async (req, res) => {
                         `).join('')}
                     </tbody>
                 </table>
-                ` : '<p style="text-align:center;">No students marked present for this date.</p>'}
+                ` : '<p style="text-align:center;">No students marked present for this subject on this date.</p>'}
 
                 <div class="print-info">
                     <button onclick="window.print()">Print this page</button>
@@ -335,10 +365,10 @@ app.get('/admin/print/:date', async (req, res) => {
         res.send(html);
 
     } catch (error) {
-        console.error(`!!! Error in GET /admin/print/${date}:`, error);
+        console.error(`!!! Error in GET /admin/print/${subject}/${date}:`, error);
         res.status(500).send("Error generating printable view.");
     }
-     console.log(`<-- GET /admin/print/${date} response sent.`);
+     console.log(`<-- GET /admin/print/${subject}/${date} response sent.`);
 });
 
 
@@ -347,8 +377,7 @@ app.get('/admin/print/:date', async (req, res) => {
 // Serve the frontend from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve the admin interface from 'admin' directory (added static serving)
-// This allows admin.html to load relative assets if needed in the future
+// Serve the admin interface from 'admin' directory
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 // Specific route for the admin HTML file itself
 app.get('/admin', (req, res) => {
@@ -358,16 +387,12 @@ app.get('/admin', (req, res) => {
 });
 
 // Fallback for the frontend SPA (or just index.html)
-// Handles refresh on any non-API, non-file path
 app.get('*', (req, res) => {
   console.log(`--> GET /* fallback route requested for path: ${req.path} at ${new Date().toISOString()}`);
-  // Check if the request looks like an API call or a file request first
   if (req.path.startsWith('/api/') || req.path.startsWith('/admin/') || req.path.includes('.')) {
-    // If it's an API call, admin path, or file request not handled above, let it 404
      console.log(`Path ${req.path} not handled, sending 404.`);
     res.status(404).send('Not Found');
   } else {
-    // Otherwise, serve the main frontend page
     console.log(`Serving public/index.html as fallback for path: ${req.path}`);
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
@@ -376,29 +401,21 @@ app.get('*', (req, res) => {
 
 
 // --- Global Error Handlers ---
-// Catch unhandled synchronous exceptions
 process.on('uncaughtException', (error) => {
   console.error('!!! UNCAUGHT EXCEPTION:', error);
-  // It's generally recommended to exit gracefully after an uncaught exception
-  // process.exit(1); // Uncomment if you want the server to stop on such errors
 });
-
-// Catch unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
   console.error('!!! UNHANDLED REJECTION:', reason);
-  // console.error('Promise:', promise); // Uncomment for more detail
 });
-
 
 // --- Start Server ---
 app.listen(PORT, async () => {
     console.log(`Server starting on port ${PORT}...`);
     try {
-        await loadData(); // Pre-load data on start and create file if needed
+        await loadData();
         console.log("Initial data load completed.");
     } catch (err) {
         console.error("!!! CRITICAL: Error during initial data load on startup:", err);
-        // Server will still start, but might operate with default data
     }
     console.log(`Server listening on port ${PORT}`);
     console.log(`Frontend available at http://localhost:${PORT}`);
