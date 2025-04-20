@@ -8,5 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Your Name",
-  "license": "ISC"
+  "license": "ISC",
+   "Dependencies": {
+    "nodemon": "^2.0.22"
+  }
   }
