@@ -1,7 +1,7 @@
 {
-  "name": "attendance-app",
+  "name": "student-attendance-system",
   "version": "1.0.0",
-  "description": "Student Attendance System with separate front-end and admin back-end",
+  "description": "Student attendance system with frontend and admin backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -9,7 +9,10 @@
   },
   "author": "Your Name",
   "license": "ISC",
-   "Dependencies": {
-    "nodemon": "^2.0.22"
+  "dependencies": {
+    "express": "^4.18.2"  # Using a specific recent version
+  },
+  "engines": {
+    "node": ">=18.0.0" # Specify Node version compatible with Render
   }
-  }
+}
