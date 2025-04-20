@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-       
+
         /* Add specific styles for Admin if needed */
         :root {
             --primary-color: #4a90e2;
@@ -194,11 +194,18 @@
         .btn-delete:hover {
             background: #d63031;
         }
-         .btn-print { /* Style for print button */
+         .btn-generate { /* Style for generate button */
             background: var(--admin-accent);
         }
-        .btn-print:hover {
+        .btn-generate:hover {
             background: #c66a11;
+        }
+         .btn-share { /* Style for share button */
+            background: var(--primary-color);
+            margin-left: 10px; /* Spacing */
+        }
+        .btn-share:hover {
+            background: #357abd;
         }
 
 
@@ -264,11 +271,6 @@
         .status-present { color: var(--green-color); font-weight: 500; }
         .status-absent { color: var(--red-color); font-weight: 500; }
 
-        /* Remove metrics/ranking specific styles if those pages are removed */
-        .metrics-card, .metrics-grid, .chart-container, .score-table, .excellent, .good, .average, .poor {
-             /* Keep if metrics/ranking pages are kept in admin */
-        }
-
         /* Keep loading/toast/error styles */
         .loading, .spinner, .toast, .error-message {
             /* ... same styles as original ... */
@@ -326,6 +328,46 @@
          .date-chip:hover { background: rgba(230, 126, 34, 0.15); border-color: rgba(230, 126, 34, 0.4); color: var(--admin-accent); }
          .date-chip.active { background: var(--admin-accent); color: white; border-color: var(--admin-accent); font-weight: 500; }
 
+
+        /* Present List Display Section */
+        .present-list-display {
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 5px 15px var(--shadow-color);
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.4s ease-out; /* Reuse fade in animation */
+        }
+        .present-list-display h3 {
+             color: var(--admin-accent);
+             margin-bottom: 18px;
+             font-size: 1.4em;
+             font-weight: 600;
+             border-bottom: 1px solid rgba(230, 126, 34, 0.3);
+             padding-bottom: 10px;
+        }
+        .formatted-present-list {
+             max-height: 300px; /* Prevent overly long lists */
+             overflow-y: auto;
+             margin-bottom: 20px;
+             padding-right: 10px; /* Space for scrollbar */
+        }
+        .formatted-present-list p {
+            margin-bottom: 8px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .formatted-present-list strong { /* Style roll numbers */
+            display: inline-block;
+            min-width: 80px; /* Adjust as needed */
+            color: var(--primary-color);
+        }
+         .present-list-actions {
+             text-align: right; /* Align share button to the right */
+         }
+
         /* Responsive adjustments - PASTE the @media block from original */
         @media (max-width: 768px) {
              body { padding: 10px; overflow: auto; }
@@ -369,6 +411,13 @@
              .add-student-form { flex-direction: column; } /* Stack form elements */
              .add-student-form input { width: 100%; }
              .add-student-form button { width: 100%; }
+
+             /* Adjust present list display on mobile */
+             .present-list-display { padding: 15px; }
+             .present-list-display h3 { font-size: 1.2em; }
+             .formatted-present-list { max-height: 250px; }
+             .present-list-actions { text-align: center; } /* Center share button */
+             .btn-share { margin-left: 0; margin-top: 10px; width: 100%; }
         }
 
     </style>
@@ -394,7 +443,8 @@
                     <div>
                         <button id="load-btn" class="btn">Load Date</button>
                         <button id="save-btn" class="btn btn-save">Save Attendance</button>
-                        <button id="print-btn" class="btn btn-print">Print Present List</button>
+                        <!-- MODIFIED: Changed Print button to Generate -->
+                        <button id="generate-present-list-btn" class="btn btn-generate">Generate Present List</button>
                     </div>
                 </div>
                  <!-- Error message placeholder -->
@@ -412,6 +462,18 @@
                     </thead>
                     <tbody id="attendance-tbody"></tbody>
                 </table>
+
+                <!-- ADDED: Container for Present List Display -->
+                <div id="present-list-display" class="present-list-display">
+                    <h3 id="present-list-title">Present Students</h3>
+                    <div id="formatted-present-list" class="formatted-present-list">
+                        <!-- Content generated by JS -->
+                    </div>
+                    <div class="present-list-actions">
+                        <button id="share-present-list-btn" class="btn btn-share"><i class="fas fa-share-alt"></i> Share List</button>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Manage Students Page -->
@@ -490,7 +552,13 @@
             const dateHistoryElement = document.getElementById('date-history');
             const loadBtn = document.getElementById('load-btn');
             const saveBtn = document.getElementById('save-btn');
-            const printBtn = document.getElementById('print-btn');
+            // MODIFIED: Changed printBtn reference
+            const generatePresentListBtn = document.getElementById('generate-present-list-btn');
+            // ADDED: References for Present List Display
+            const presentListDisplay = document.getElementById('present-list-display');
+            const presentListTitle = document.getElementById('present-list-title');
+            const formattedPresentList = document.getElementById('formatted-present-list');
+            const sharePresentListBtn = document.getElementById('share-present-list-btn');
             // Students Page
             const studentsTbody = document.getElementById('students-tbody');
             const addStudentForm = document.getElementById('add-student-form');
@@ -564,6 +632,8 @@
                         initAttendanceTable();
                         // Optionally reload current date's attendance
                          loadAttendanceForDate(attendanceDateInput.value);
+                         // Hide present list display if students are refetched
+                         presentListDisplay.style.display = 'none';
                     }
                 } catch (error) {
                     // Error shown by apiRequest
@@ -675,6 +745,7 @@
                      attendanceTbody.appendChild(row);
                  });
                  consoleLog("Admin: Attendance table structure initialized.");
+                 presentListDisplay.style.display = 'none'; // Hide present list when table re-initializes
             }
 
             async function fetchRecordedDates() {
@@ -703,6 +774,7 @@
                     chip.addEventListener('click', () => {
                          attendanceDateInput.value = date; // Set date input
                          loadAttendanceForDate(date);     // Trigger load
+                         presentListDisplay.style.display = 'none'; // Hide generated list when date changes
                     });
                     dateHistoryElement.appendChild(chip);
                 });
@@ -724,6 +796,7 @@
                      s.value = ""; // Reset selects
                      s.classList.remove('error-input');
                 });
+                presentListDisplay.style.display = 'none'; // Hide generated list when loading new date
 
                  if (!date) {
                      showToast("Please select a date to load.", "info");
@@ -799,6 +872,7 @@
                  showError("attendance-error", "", false); // Clear previous errors
                  const selects = attendanceTbody.querySelectorAll('.attendance-select');
                  selects.forEach(s => s.classList.remove('error-input'));
+                 presentListDisplay.style.display = 'none'; // Hide generated list when saving
 
                  if (selects.length === 0 && STUDENTS.length > 0) {
                      showError("attendance-error", "Attendance table not populated correctly. Try reloading students.", true);
@@ -846,19 +920,114 @@
                  }
             }
 
-            function handlePrint() {
+            // --- MODIFIED: Function to generate and display the present list ---
+            async function generatePresentListDisplay() {
                  const date = attendanceDateInput.value;
                  if (!date) {
-                     showToast("Please select a date to print.", "error");
+                     showToast("Please select a date to generate the list.", "error");
                      showError("attendance-error", "Select a date first.", true);
+                     presentListDisplay.style.display = 'none';
                      return;
                  }
                  showError("attendance-error", "", false); // Clear error
 
-                 // Open the print URL in a new tab
-                 const printUrl = `${API_BASE_URL}/admin/print/${date}`;
-                 window.open(printUrl, '_blank');
+                 // Get attendance data (use cache if available, otherwise fetch)
+                 let dateData = attendanceDataCache[date];
+                 if (!dateData) {
+                     consoleLog("Present list: Data not in cache, fetching...");
+                     try {
+                         dateData = await apiRequest(`/api/attendance/${date}`);
+                         attendanceDataCache[date] = dateData; // Store in cache
+                     } catch (error) {
+                         showError("attendance-error", `Failed to load attendance data for list generation: ${error.message}`, true);
+                         presentListDisplay.style.display = 'none';
+                         return;
+                     }
+                 }
+
+                 if (!dateData) { // Should not happen if API call was successful but handle anyway
+                    dateData = [];
+                 }
+
+                 // Filter for present students and map roll numbers to names
+                 const presentStudents = dateData
+                    .filter(item => item.status === 'present')
+                    .map(item => {
+                        const studentInfo = STUDENTS.find(s => s.roll_no === item.roll_no);
+                        return {
+                            roll_no: item.roll_no,
+                            name: studentInfo ? studentInfo.name : 'Unknown Name' // Handle case where student might have been deleted
+                        };
+                    })
+                    .sort((a, b) => a.roll_no.localeCompare(b.roll_no)); // Sort by roll number
+
+                // Update the display area
+                presentListTitle.textContent = `Present Students - ${date}`;
+                if (presentStudents.length > 0) {
+                    let listHtml = '';
+                    presentStudents.forEach(student => {
+                        listHtml += `<p><strong>${student.roll_no}</strong> ${student.name}</p>`;
+                    });
+                    formattedPresentList.innerHTML = listHtml;
+                } else {
+                    formattedPresentList.innerHTML = `<p>No students were marked present on this date.</p>`;
+                }
+
+                presentListDisplay.style.display = 'block'; // Show the display area
+                presentListDisplay.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); // Scroll it into view
             }
+
+            // --- ADDED: Function to handle sharing the present list ---
+            async function sharePresentList() {
+                const date = attendanceDateInput.value;
+                const title = presentListTitle.textContent || `Present List - ${date}`;
+                let shareText = `${title}\n\n`;
+
+                const presentStudents = Array.from(formattedPresentList.querySelectorAll('p')).map(p => {
+                    // Extract text carefully, assuming "<strong>ROLL</strong> NAME" structure
+                    const roll = p.querySelector('strong')?.textContent || '';
+                    const name = p.textContent.replace(roll, '').trim();
+                    return `${roll}: ${name}`;
+                });
+
+                if (presentStudents.length === 0 || (presentStudents.length === 1 && presentStudents[0].includes("No students"))) {
+                    showToast("No present students to share.", "info");
+                    return;
+                }
+
+                shareText += presentStudents.join('\n');
+
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: title,
+                            text: shareText,
+                        });
+                        consoleLog('Present list shared successfully via Web Share API.');
+                        showToast('List shared!', 'success');
+                    } catch (error) {
+                        consoleError('Error sharing via Web Share API:', error);
+                        // Fallback or just inform user
+                        if (error.name !== 'AbortError') { // Don't show error if user cancelled share dialog
+                             showToast('Could not share list automatically.', 'error');
+                        }
+                    }
+                } else if (navigator.clipboard) {
+                    // Fallback to clipboard
+                    try {
+                        await navigator.clipboard.writeText(shareText);
+                        showToast('List copied to clipboard!', 'success');
+                    } catch (error) {
+                         consoleError('Error copying to clipboard:', error);
+                         showToast('Could not copy list to clipboard.', 'error');
+                    }
+                }
+                 else {
+                    // Very basic fallback
+                    showToast('Sharing not supported. Try copying the list manually.', 'info');
+                }
+            }
+
 
             // --- Navigation ---
             function switchPage(targetPageId) {
@@ -879,6 +1048,7 @@
 
                  currentPage = targetPageId;
                  updateHighlight();
+                 presentListDisplay.style.display = 'none'; // Hide present list when switching pages
 
                  // Load data specific to the page if needed
                  if (targetPageId === "students") {
@@ -915,8 +1085,14 @@
                 // Attendance
                 loadBtn.addEventListener('click', () => loadAttendanceForDate(attendanceDateInput.value));
                 saveBtn.addEventListener('click', saveAttendance);
-                printBtn.addEventListener('click', handlePrint);
-                attendanceDateInput.addEventListener('change', (e) => loadAttendanceForDate(e.target.value)); // Load on date change too
+                // MODIFIED: Attach listener to generate button
+                generatePresentListBtn.addEventListener('click', generatePresentListDisplay);
+                attendanceDateInput.addEventListener('change', (e) => {
+                    loadAttendanceForDate(e.target.value); // Load on date change
+                    presentListDisplay.style.display = 'none'; // Hide list on date change
+                });
+                // ADDED: Listener for share button
+                sharePresentListBtn.addEventListener('click', sharePresentList);
                 // Students
                 addStudentForm.addEventListener('submit', handleAddStudent);
                 // Common
@@ -942,7 +1118,7 @@
                     // 4. Set default date for attendance page and load its data
                     const today = getTodayDate();
                     attendanceDateInput.value = today;
-                    attendanceDateInput.max = today; // Prevent future dates? Optional for admin.
+                    // attendanceDateInput.max = today; // Prevent future dates? Optional for admin. Let's keep it flexible for admin.
                     consoleLog(`Admin: Set date to today: ${today}`);
                     await loadAttendanceForDate(today); // Load today's data
 
