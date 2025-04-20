@@ -1,350 +1,277 @@
 const express = require('express');
-const fs = require('fs');
+const fs = require('fs').promises; // Use promise-based fs
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Use Render's port or 3000 locally
+// Use the port Render provides, or 3000 for local development
+const PORT = process.env.PORT || 3000;
+const DATA_FILE = path.join(__dirname, 'data.json');
 
-const DATA_DIR = path.join(__dirname, 'data');
-const STUDENTS_FILE = path.join(DATA_DIR, 'students.json');
-const ATTENDANCE_FILE = path.join(DATA_DIR, 'attendance.json');
+// Middleware to parse JSON request bodies
+app.use(express.json());
 
-// --- Data Storage Initialization ---
-let students = [];
-let attendanceData = {};
+// --- Data Management Functions ---
+let dataCache = null; // Simple in-memory cache
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR);
-}
-
-// Load initial data or create files if they don't exist
-function loadData() {
+async function loadData() {
     try {
-        if (fs.existsSync(STUDENTS_FILE)) {
-            const studentData = fs.readFileSync(STUDENTS_FILE, 'utf8');
-            students = JSON.parse(studentData);
-            console.log(`Loaded ${students.length} students from ${STUDENTS_FILE}`);
-        } else {
-            // Start with default students if file doesn't exist
-            students = [
-                {"roll_no": "220351", "name": "MOHD ANSARY"},
-                {"roll_no": "220361", "name": "ZAKIR HUSSAIN TAK"},
-                {"roll_no": "220362", "name": "NUMAN BASHIR DAR"},
-                {"roll_no": "220363", "name": "FAISAL AHMAD MIR"},
-                {"roll_no": "220364", "name": "MOHD IMRAN"},
-                {"roll_no": "220365", "name": "SHAHID BASHIR SHEIKH"},
-                {"roll_no": "220366", "name": "AAMIR ALI WANI"},
-                {"roll_no": "220368", "name": "SHAKEEL SIDIQI"},
-                {"roll_no": "220370", "name": "OVAIS MANZOOR BABA"},
-                {"roll_no": "220371", "name": "MOHAMMAD HANZAL BHAT"},
-                {"roll_no": "220372", "name": "ABSAR ALTAF SHAH"},
-                {"roll_no": "220374", "name": "MUZAMIL HUSSAIN"},
-                {"roll_no": "220421", "name": "MEHVISH MANZOOR"},
-                {"roll_no": "220423", "name": "ATTA UL MUSTAFA"},
-                {"roll_no": "220424", "name": "SHABNAM ARA"},
-                {"roll_no": "220425", "name": "IQRA ASHRAF DAR"},
-                {"roll_no": "220426", "name": "FAZIL ALI WANI"},
-                {"roll_no": "220427", "name": "UMAR ALI BHAT"},
-                {"roll_no": "220428", "name": "ZEENAT NABI"},
-                {"roll_no": "220429", "name": "MIR SURIYA NISAR"},
-                {"roll_no": "220430", "name": "SHAHNAWAZ AKBAR"}
-            ];
-            saveStudents(); // Save defaults
-            console.log(`Created ${STUDENTS_FILE} with default students.`);
+        if (dataCache) {
+            // console.log("Serving data from cache");
+            return dataCache;
         }
-    } catch (err) {
-        console.error(`Error loading students data: ${err}`);
-        students = []; // Fallback to empty list
-    }
-
-    try {
-        if (fs.existsSync(ATTENDANCE_FILE)) {
-            const attData = fs.readFileSync(ATTENDANCE_FILE, 'utf8');
-            attendanceData = JSON.parse(attData);
-            console.log(`Loaded attendance data for ${Object.keys(attendanceData).length} dates from ${ATTENDANCE_FILE}`);
-        } else {
-            attendanceData = {};
-            saveAttendanceData(); // Create empty file
-            console.log(`Created empty ${ATTENDANCE_FILE}.`);
+        console.log("Reading data from file:", DATA_FILE);
+        const fileContent = await fs.readFile(DATA_FILE, 'utf-8');
+        dataCache = JSON.parse(fileContent);
+        // Ensure basic structure exists if file was empty/corrupted
+        if (!dataCache.students) dataCache.students = [];
+        if (!dataCache.attendance) dataCache.attendance = {};
+        return dataCache;
+    } catch (error) {
+        console.error('Error reading data file:', error);
+        // If file doesn't exist or is invalid, start with default structure
+        dataCache = { students: [], attendance: {} };
+        // Attempt to create the file if it doesn't exist
+        if (error.code === 'ENOENT') {
+            await saveData(dataCache); // Save the default structure
         }
-    } catch (err) {
-        console.error(`Error loading attendance data: ${err}`);
-        attendanceData = {}; // Fallback to empty object
+        return dataCache; // Return default structure on error
     }
 }
 
-function saveStudents() {
+async function saveData(data) {
     try {
-        fs.writeFileSync(STUDENTS_FILE, JSON.stringify(students, null, 2), 'utf8'); // Pretty print JSON
-        console.log('Students data saved.');
-        return true;
-    } catch (err) {
-        console.error(`Error saving students data: ${err}`);
-        return false;
+        console.log("Saving data to file:", DATA_FILE);
+        await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+        dataCache = data; // Update cache after successful save
+        console.log("Data saved successfully.");
+    } catch (error) {
+        console.error('Error writing data file:', error);
+        // Re-throw or handle as needed; prevents client from getting success message on failure
+        throw new Error('Failed to save data to the server.');
     }
 }
-
-function saveAttendanceData() {
-    try {
-        fs.writeFileSync(ATTENDANCE_FILE, JSON.stringify(attendanceData, null, 2), 'utf8');
-        console.log('Attendance data saved.');
-        return true;
-    } catch (err) {
-        console.error(`Error saving attendance data: ${err}`);
-        return false;
-    }
-}
-
-// --- Middleware ---
-app.use(express.json()); // Parse JSON request bodies
-app.use(express.static(path.join(__dirname, 'public'))); // Serve front-end files
 
 // --- API Endpoints ---
 
-// GET Students
-app.get('/api/students', (req, res) => {
-    res.json(students);
+// Get all students
+app.get('/api/students', async (req, res) => {
+    try {
+        const data = await loadData();
+        res.json(data.students || []);
+    } catch (error) {
+        res.status(500).json({ message: "Error loading student data." });
+    }
 });
 
-// POST Add Student (Admin only)
-app.post('/api/students', (req, res) => {
-    const { roll_no, name } = req.body;
-    if (!roll_no || !name) {
-        return res.status(400).json({ message: 'Roll No and Name are required' });
-    }
-    if (students.some(s => s.roll_no === roll_no)) {
-        return res.status(400).json({ message: 'Student with this Roll No already exists' });
-    }
-    const newStudent = { roll_no, name };
-    students.push(newStudent);
-    if (saveStudents()) {
+// Add a student
+app.post('/api/students', async (req, res) => {
+    try {
+        const { roll_no, name, course } = req.body;
+        if (!roll_no || !name) {
+            return res.status(400).json({ message: "Roll number and name are required." });
+        }
+
+        const data = await loadData();
+        const existing = data.students.find(s => s.roll_no === roll_no);
+        if (existing) {
+            return res.status(400).json({ message: `Student with roll number ${roll_no} already exists.` });
+        }
+
+        const newStudent = { roll_no, name, course: course || "N/A" };
+        data.students.push(newStudent);
+        data.students.sort((a, b) => a.roll_no.localeCompare(b.roll_no)); // Keep sorted
+
+        await saveData(data);
         res.status(201).json(newStudent);
-    } else {
-        // Revert add if save failed
-        students.pop();
-        res.status(500).json({ message: 'Failed to save student data' });
+    } catch (error) {
+        console.error("Error adding student:", error);
+        res.status(500).json({ message: error.message || "Error adding student." });
     }
 });
 
-// DELETE Student (Admin only)
-app.delete('/api/students/:roll_no', (req, res) => {
-    const rollNoToDelete = req.params.roll_no;
-    const initialLength = students.length;
-    students = students.filter(s => s.roll_no !== rollNoToDelete);
+// Remove a student
+app.delete('/api/students/:roll_no', async (req, res) => {
+    try {
+        const roll_no_to_delete = req.params.roll_no;
+        const data = await loadData();
 
-    if (students.length < initialLength) {
-        if (saveStudents()) {
-            res.status(200).json({ message: `Student ${rollNoToDelete} deleted` });
-        } else {
-            // If save failed, we might need to reload data to be safe
-            loadData(); // Reload to revert the in-memory change
-            res.status(500).json({ message: 'Failed to save student data after deletion' });
+        const initialLength = data.students.length;
+        data.students = data.students.filter(s => s.roll_no !== roll_no_to_delete);
+
+        if (data.students.length === initialLength) {
+            return res.status(404).json({ message: `Student with roll number ${roll_no_to_delete} not found.` });
         }
-    } else {
-        res.status(404).json({ message: `Student ${rollNoToDelete} not found` });
-    }
-});
 
-// GET Attendance Dates
-app.get('/api/attendance/dates', (req, res) => {
-    res.json(Object.keys(attendanceData).sort().reverse()); // Newest first
-});
-
-// GET Attendance for a specific date
-app.get('/api/attendance/:date', (req, res) => {
-    const date = req.params.date;
-    if (attendanceData[date]) {
-        res.json(attendanceData[date]);
-    } else {
-        // Return empty array or default structure if preferred for non-existent date
-        res.json([]);
-        // Or: res.status(404).json({ message: 'No attendance data found for this date' });
-    }
-});
-
-// POST Save/Update Attendance for a specific date (Admin only)
-app.post('/api/attendance/:date', (req, res) => {
-    const date = req.params.date;
-    const attendanceList = req.body; // Expecting an array of {roll_no, name, status}
-
-    if (!Array.isArray(attendanceList)) {
-        return res.status(400).json({ message: 'Invalid attendance data format. Expected an array.' });
-    }
-
-    // Basic validation (could be more robust)
-    if (attendanceList.some(item => !item.roll_no || !item.status)) {
-        return res.status(400).json({ message: 'Each attendance record must have roll_no and status.' });
-    }
-
-    attendanceData[date] = attendanceList;
-    if (saveAttendanceData()) {
-        res.status(200).json({ message: `Attendance for ${date} saved successfully.` });
-    } else {
-        // Revert in-memory change if save failed
-        delete attendanceData[date]; // Or reload previous state if possible
-        res.status(500).json({ message: 'Failed to save attendance data.' });
-    }
-});
-
-// --- Metrics & Ranking Calculation (Server-side) ---
-
-function calculateMetrics() {
-    const dates = Object.keys(attendanceData);
-    const totalClasses = dates.length;
-    let studentMetrics = {};
-    students.forEach(s => {
-        studentMetrics[s.roll_no] = { name: s.name, present: 0, absent: 0, total: 0 };
-    });
-
-    let dailyRates = {};
-    let allDatesSorted = dates.sort();
-    let totalPresentOverall = 0;
-    let totalRecordsOverall = 0;
-
-    allDatesSorted.forEach(date => {
-        const attendanceList = attendanceData[date] || [];
-        let presentCount = 0;
-        let validEntriesCount = 0;
-        attendanceList.forEach(entry => {
-            const rollNo = entry.roll_no;
-            // Ensure student still exists in the main list before counting
-            if (studentMetrics[rollNo]) {
-                 validEntriesCount++;
-                 totalRecordsOverall++;
-                 studentMetrics[rollNo].total++;
-                 if (entry.status === "present") {
-                     studentMetrics[rollNo].present++;
-                     presentCount++;
-                     totalPresentOverall++;
-                 } else if (entry.status === "absent") {
-                     studentMetrics[rollNo].absent++;
-                 }
-            }
+        // Also remove student from existing attendance records (optional, but good practice)
+        Object.keys(data.attendance).forEach(date => {
+            data.attendance[date] = data.attendance[date].filter(att => att.roll_no !== roll_no_to_delete);
         });
-        dailyRates[date] = validEntriesCount > 0 ? (presentCount / validEntriesCount) * 100 : 0;
-    });
 
-    let bestDayDate = "-";
-    let worstDayDate = "-";
-    let bestDayVal = 0;
-    let worstDayVal = 100; // Start high for min
-
-    if (Object.keys(dailyRates).length > 0) {
-         const rates = Object.values(dailyRates);
-         bestDayVal = Math.max(...rates);
-         worstDayVal = Math.min(...rates);
-         bestDayDate = Object.keys(dailyRates).find(d => dailyRates[d] === bestDayVal) || "-";
-         worstDayDate = Object.keys(dailyRates).find(d => dailyRates[d] === worstDayVal) || "-";
+        await saveData(data);
+        res.status(200).json({ message: `Student ${roll_no_to_delete} deleted successfully.` });
+    } catch (error) {
+        console.error("Error deleting student:", error);
+        res.status(500).json({ message: error.message || "Error deleting student." });
     }
-
-
-    const avgAttendanceOverall = totalRecordsOverall > 0 ? (totalPresentOverall / totalRecordsOverall) * 100 : 0;
-
-    return {
-        totalClasses,
-        avgAttendance: avgAttendanceOverall,
-        bestDay: { date: bestDayDate, value: bestDayVal },
-        worstDay: { date: worstDayDate, value: worstDayVal },
-        studentMetrics, // Detailed student stats
-        dailyRates      // For trend chart
-    };
-}
-
-// GET Overall Metrics
-app.get('/api/metrics', (req, res) => {
-    const metrics = calculateMetrics();
-    res.json({
-        totalClasses: metrics.totalClasses,
-        avgAttendance: metrics.avgAttendance.toFixed(1) + '%',
-        bestDay: metrics.bestDay.date !== "-" ? `${metrics.bestDay.date} (${metrics.bestDay.value.toFixed(1)}%)` : "-",
-        worstDay: metrics.worstDay.date !== "-" ? `${metrics.worstDay.date} (${metrics.worstDay.value.toFixed(1)}%)` : "-",
-        dailyRates: metrics.dailyRates // Send daily rates for trend chart
-    });
 });
 
-// GET Detailed Student Metrics (for the table)
-app.get('/api/metrics/students', (req, res) => {
-    const { studentMetrics } = calculateMetrics();
-    const studentList = Object.entries(studentMetrics).map(([rollNo, metrics]) => {
-        const attendancePercent = metrics.total > 0 ? (metrics.present / metrics.total) * 100 : 0;
-        return {
-            roll_no: rollNo,
-            name: metrics.name,
-            present: metrics.present,
-            absent: metrics.absent,
-            attendance_percent: attendancePercent.toFixed(1)
-        };
-    });
-    res.json(studentList);
+// Get all attendance data (for frontend initial load)
+app.get('/api/attendance', async (req, res) => {
+    try {
+        const data = await loadData();
+        res.json(data.attendance || {});
+    } catch (error) {
+        res.status(500).json({ message: "Error loading attendance data." });
+    }
 });
 
-// GET Rankings
-app.get('/api/rankings', (req, res) => {
-    const { studentMetrics } = calculateMetrics();
-    let studentSummary = Object.entries(studentMetrics).map(([rollNo, metrics]) => {
-        const attendancePercent = metrics.total > 0 ? (metrics.present / metrics.total) * 100 : 0;
-        return {
-            roll_no: rollNo,
-            name: metrics.name,
-            attendance_percent: attendancePercent
-        };
-    });
-
-    studentSummary.sort((a, b) => {
-        if (b.attendance_percent !== a.attendance_percent) {
-            return b.attendance_percent - a.attendance_percent;
+// Get attendance for a specific date (for admin loading)
+app.get('/api/attendance/:date', async (req, res) => {
+    try {
+        const date = req.params.date;
+        // Basic date validation (YYYY-MM-DD)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+             return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD." });
         }
-        return a.name.localeCompare(b.name);
-    });
+        const data = await loadData();
+        res.json(data.attendance[date] || []); // Return empty array if date not found
+    } catch (error) {
+        res.status(500).json({ message: "Error loading attendance data for the date." });
+    }
+});
 
-    // Add rank
-    let currentRank = 0;
-    let lastPercent = -1;
-    let studentsAtRank = 0;
-    const rankedList = studentSummary.map((summary) => {
-         const percent = summary.attendance_percent;
-         if (percent !== lastPercent) {
-            currentRank += (studentsAtRank + 1);
-            studentsAtRank = 0;
-            lastPercent = percent;
-         } else {
-            studentsAtRank++;
+// Save/Update attendance for a specific date
+app.post('/api/attendance/:date', async (req, res) => {
+    try {
+        const date = req.params.date;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+             return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD." });
+        }
+        const attendanceList = req.body; // Expecting an array of {roll_no, status}
+
+        if (!Array.isArray(attendanceList)) {
+            return res.status(400).json({ message: "Invalid data format. Expected an array." });
+        }
+
+        // Basic validation of the list
+        const validStatuses = ['present', 'absent'];
+        const isValid = attendanceList.every(item =>
+            item && typeof item.roll_no === 'string' && typeof item.status === 'string' && validStatuses.includes(item.status)
+        );
+
+        if (!isValid) {
+             return res.status(400).json({ message: "Invalid attendance data in the list. Each item must have roll_no and a valid status ('present' or 'absent')." });
+        }
+
+        const data = await loadData();
+        // Add student names to the saved data for easier use later (optional)
+        const enrichedAttendance = attendanceList.map(att => {
+            const student = data.students.find(s => s.roll_no === att.roll_no);
+            return { ...att, name: student ? student.name : 'Unknown' };
+        });
+
+        data.attendance[date] = enrichedAttendance;
+        await saveData(data);
+        res.status(200).json({ message: `Attendance for ${date} saved successfully.` });
+
+    } catch (error) {
+        console.error(`Error saving attendance for date ${req.params.date}:`, error);
+        res.status(500).json({ message: error.message || "Error saving attendance data." });
+    }
+});
+
+// Generate Printable HTML for a date
+app.get('/admin/print/:date', async (req, res) => {
+    try {
+        const date = req.params.date;
+         if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+             return res.status(400).send("Invalid date format. Use YYYY-MM-DD.");
          }
-        return {
-            rank: currentRank,
-            ...summary,
-            attendance_percent: percent.toFixed(1) // Format for display
-        };
-    });
+        const data = await loadData();
+        const attendanceList = data.attendance[date] || [];
+        const presentStudents = attendanceList.filter(s => s.status === 'present');
 
-    res.json(rankedList);
+        // Simple HTML for printing
+        let html = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>Attendance Printout - ${date}</title>
+                <style>
+                    body { font-family: sans-serif; margin: 20px; }
+                    h1, h2 { text-align: center; }
+                    table { width: 80%; margin: 20px auto; border-collapse: collapse; border: 1px solid #ccc; }
+                    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                    .print-info { text-align: center; margin-top: 30px; font-size: 0.9em; color: #555; }
+                    @media print {
+                        button { display: none; }
+                        .print-info { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Student Attendance</h1>
+                <h2>Date: ${date}</h2>
+                <h2>Present Students (${presentStudents.length} / ${data.students.length})</h2>
+                ${presentStudents.length > 0 ? `
+                <table>
+                    <thead>
+                        <tr><th>Roll No</th><th>Name</th></tr>
+                    </thead>
+                    <tbody>
+                        ${presentStudents.map(student => `
+                            <tr><td>${student.roll_no}</td><td>${student.name}</td></tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ` : '<p style="text-align:center;">No students marked present.</p>'}
+
+                <div class="print-info">
+                    <button onclick="window.print()">Print this page</button>
+                </div>
+            </body>
+            </html>
+        `;
+        res.send(html);
+
+    } catch (error) {
+        console.error(`Error generating print view for date ${req.params.date}:`, error);
+        res.status(500).send("Error generating printable view.");
+    }
 });
 
 
-// --- Admin Page ---
+// --- Serving Static Files ---
+
+// Serve the frontend from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve the admin interface (password protect this in a real scenario!)
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
 });
-// Serve admin JS file (make sure it's requested correctly from admin.html)
-app.get('/admin/admin.js', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin', 'admin.js'));
+
+// Fallback for the frontend SPA (Single Page App) - handles refresh
+// If you only have index.html, this might not be strictly needed, but good practice
+app.get('*', (req, res) => {
+  // Check if the request looks like an API call or a file request first
+  if (req.path.startsWith('/api/') || req.path.includes('.')) {
+    // If it's an API call not handled above or a file request, let it 404
+    res.status(404).send('Not Found');
+  } else {
+    // Otherwise, serve the main frontend page for client-side routing
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
 });
-// Optional: Serve admin CSS if you create one
-// app.get('/admin/admin.css', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'admin', 'admin.css'));
-// });
-
-// --- Catch-all for front-end SPA routing (if needed, usually not for this simple structure) ---
-// app.get('*', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'public', 'index.html'));
-// });
 
 
-// --- Server Start ---
-loadData(); // Load data when server starts
-
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Admin interface available at http://localhost:${PORT}/admin`);
+// --- Start Server ---
+app.listen(PORT, async () => {
+    console.log(`Server starting on port ${PORT}...`);
+    await loadData(); // Pre-load data on start
+    console.log(`Server listening on port ${PORT}`);
+    console.log(`Frontend available at http://localhost:${PORT}`);
+    console.log(`Admin available at http://localhost:${PORT}/admin`);
 });
