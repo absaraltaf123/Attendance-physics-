@@ -1,0 +1,26 @@
+{
+  "students": [
+    {"roll_no": "220351", "name": "MOHD ANSARY", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220361", "name": "ZAKIR HUSSAIN TAK", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220362", "name": "NUMAN BASHIR DAR", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220363", "name": "FAISAL AHMAD MIR", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220364", "name": "MOHD IMRAN", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220365", "name": "SHAHID BASHIR SHEIKH", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220366", "name": "AAMIR ALI WANI", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220368", "name": "SHAKEEL SIDIQI", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220370", "name": "OVAIS MANZOOR BABA", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220371", "name": "MOHAMMAD HANZAL BHAT", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220372", "name": "ABSAR ALTAF SHAH", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220374", "name": "MUZAMIL HUSSAIN", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220421", "name": "MEHVISH MANZOOR", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220423", "name": "ATTA UL MUSTAFA", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220424", "name": "SHABNAM ARA", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220425", "name": "IQRA ASHRAF DAR", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220426", "name": "FAZIL ALI WANI", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220427", "name": "UMAR ALI BHAT", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220428", "name": "ZEENAT NABI", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220429", "name": "MIR SURIYA NISAR", "course": "LINEAR ALGEBRA"},
+    {"roll_no": "220430", "name": "SHAHNAWAZ AKBAR", "course": "LINEAR ALGEBRA"}
+  ],
+  "attendance": {}
+}
