@@ -10,9 +10,9 @@
   "author": "Your Name",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2"  # Using a specific recent version
+    "express": "^4.18.2"
   },
   "engines": {
-    "node": ">=18.0.0" # Specify Node version compatible with Render
+    "node": ">=18.0.0"
   }
 }
