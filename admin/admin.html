@@ -4,505 +4,969 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance Admin</title>
+    <!-- Font Awesome & Chart.js (Optional for admin, remove if charts not needed here) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        /* Embedded CSS Start */
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1, h2 { color: #4a90e2; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
-        .section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }
-        .section:last-child { border-bottom: none; margin-bottom: 0; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="date"], select {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
+        /* PASTE THE ENTIRE <style>...</style> block from your original HTML file here */
+        /* Add specific styles for Admin if needed */
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #50c878;
+            --background-color: rgba(255, 255, 255, 0.1);
+            --border-color: rgba(255, 255, 255, 0.2);
+            --text-color: #333;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --red-color: #ff6b6b;
+            --yellow-color: #ffd166;
+            --green-color: #06d6a0;
+            --admin-accent: #e67e22; /* Orange accent for admin */
         }
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.2s ease;
-        }
-        .btn-primary { background-color: #4a90e2; color: white; }
-        .btn-primary:hover { background-color: #357abd; }
-        .btn-secondary { background-color: #50c878; color: white; }
-        .btn-secondary:hover { background-color: #42a866; }
-        .btn-danger { background-color: #ff6b6b; color: white; margin-left: 5px;}
-        .btn-danger:hover { background-color: #e74c3c; }
-        .btn-print { background-color: #f39c12; color: white; }
-        .btn-print:hover { background-color: #e67e22; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background-color: #f9f9f9; font-weight: bold; }
-        td select { margin-bottom: 0; padding: 6px 10px; } /* Smaller select in table */
-        .student-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
-        .student-list-item:last-child { border-bottom: none; }
-        .error { color: #ff6b6b; margin-top: 10px; font-weight: bold; display: none; /* Hidden by default */ }
-        .success { color: #50c878; margin-top: 10px; font-weight: bold; display: none; /* Hidden by default */ }
-         /* Loading indicator */
-        #admin-loading { display: none; margin-top: 15px; font-style: italic; color: #555; }
-        #admin-loading.active { display: block; }
-        #student-list-loading { display: none; color: #555; margin-bottom: 10px;}
-         /* Print specific styles */
-        @media print {
-            body * { visibility: hidden; }
-            #print-section, #print-section * { visibility: visible; }
-            #print-section { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; margin: 0; box-shadow: none; border: none;}
-            button, input, label, h1 { display: none !important; } /* Hide buttons/inputs in print */
-            h2, h3 { margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #ccc;}
-            table { margin-top: 5px; width: 100%; border: 1px solid #ccc; }
-            th, td { font-size: 10pt; padding: 5px; border: 1px solid #eee;}
-            th { background-color: #eee; }
-            .container { box-shadow: none; border: none; padding: 0;}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        /* Embedded CSS End */
+
+        body {
+            background: linear-gradient(135deg, #eef2f3 0%, #8e9eab 100%); /* Slightly different admin bg */
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.75); /* Slightly more opaque */
+            backdrop-filter: blur(8px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            height: calc(100vh - 40px);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-around; /* Adjust as needed for admin nav */
+            align-items: center;
+            padding: 10px 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .nav-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-color);
+            font-size: 22px; /* Adjust size */
+            text-align: center;
+        }
+
+        .nav-item.active {
+            color: var(--admin-accent); /* Use admin accent */
+        }
+
+        .nav-item:hover:not(.active) {
+             color: var(--admin-accent);
+             opacity: 0.8;
+        }
+
+        .highlight {
+            position: absolute;
+            bottom: 0;
+            height: 3px;
+            background: var(--admin-accent); /* Use admin accent */
+            box-shadow: 0 0 8px var(--admin-accent);
+            transition: all 0.3s ease;
+            border-radius: 1.5px;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            position: relative;
+        }
+
+        .page {
+            display: none;
+            /* Animation properties */
+            position: absolute;
+            width: calc(100% - 50px);
+            top: 25px;
+            left: 25px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .page.active {
+            display: block;
+            position: relative;
+            width: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        @keyframes fadeIn {
+             from { opacity: 0; transform: translateY(10px); }
+             to { opacity: 1; transform: translateY(0); }
+         }
+
+        h1 {
+            color: var(--admin-accent); /* Admin accent */
+            margin-bottom: 25px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--admin-accent);
+            padding-bottom: 12px;
+            font-size: 1.8em;
+        }
+
+        .date-selector {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(5px);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .date-input {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            flex-grow: 1;
+            min-width: 180px;
+        }
+
+        .date-selector > div {
+             display: flex;
+             gap: 10px;
+             flex-wrap: wrap; /* Allow buttons to wrap */
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn:active {
+            transform: translateY(0px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-save {
+            background: var(--secondary-color);
+        }
+        .btn-save:hover {
+            background: #42a866;
+        }
+        .btn-delete { /* Style for delete buttons */
+            background: var(--red-color);
+        }
+        .btn-delete:hover {
+            background: #d63031;
+        }
+         .btn-print { /* Style for print button */
+            background: var(--admin-accent);
+        }
+        .btn-print:hover {
+            background: #c66a11;
+        }
+
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            background: rgba(255, 255, 255, 0.85); /* More opaque */
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+
+        thead {
+            background: rgba(230, 126, 34, 0.15); /* Admin accent header */
+        }
+
+        th, td {
+            padding: 14px 18px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--admin-accent); /* Admin accent */
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover td {
+            background: rgba(230, 126, 34, 0.08); /* Admin accent hover */
+        }
+
+        select.attendance-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: white;
+            width: 100%;
+            min-width: 110px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        select.attendance-select:focus {
+             border-color: var(--admin-accent); /* Admin accent */
+             outline: none;
+        }
+        select.attendance-select.error-input {
+            border-color: var(--red-color);
+        }
+
+
+        /* Status colors same as original */
+        .status-present { color: var(--green-color); font-weight: 500; }
+        .status-absent { color: var(--red-color); font-weight: 500; }
+
+        /* Remove metrics/ranking specific styles if those pages are removed */
+        .metrics-card, .metrics-grid, .chart-container, .score-table, .excellent, .good, .average, .poor {
+             /* Keep if metrics/ranking pages are kept in admin */
+        }
+
+        /* Keep loading/toast/error styles */
+        .loading, .spinner, .toast, .error-message {
+            /* ... same styles as original ... */
+        }
+        .loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); display: flex; justify-content: center; align-items: center; z-index: 10000; visibility: hidden; opacity: 0; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+        .loading.active { visibility: visible; opacity: 1; transition: opacity 0.3s ease, visibility 0s linear 0s; }
+        .spinner { border: 5px solid rgba(74, 144, 226, 0.2); border-radius: 50%; border-top-color: var(--admin-accent); width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-message { color: var(--red-color); margin-top: 15px; padding: 12px 18px; background-color: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); border-radius: 8px; font-weight: 500; display: none; transition: opacity 0.3s ease; }
+        .error-message.active { display: block; }
+        .toast { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); padding: 15px 25px; background: var(--secondary-color); color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateX(-50%) translateY(20px); transition: opacity 0.3s ease, transform 0.3s ease; z-index: 10001; font-weight: 500; min-width: 250px; text-align: center; visibility: hidden; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); visibility: visible; }
+        .toast.hide { opacity: 0; transform: translateX(-50%) translateY(20px); visibility: hidden; transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s; }
+        .toast.error { background: var(--red-color); }
+        .toast.info { background: var(--primary-color); } /* Keep info style */
+
+
+        /* Admin Specific: Manage Students Section */
+        .manage-students-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+         .manage-students-card h2 {
+            color: var(--admin-accent);
+            margin-bottom: 18px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        .add-student-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .add-student-form input {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 15px;
+            flex-grow: 1;
+        }
+        .add-student-form input[type="text"] { min-width: 150px; }
+        .add-student-form button { align-self: center; } /* Align button nicely */
+
+        /* Date history chips styling same as original */
+         .date-history { margin-top: 25px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; }
+         .date-chip { background: rgba(255, 255, 255, 0.3); border-radius: 15px; padding: 6px 18px; font-size: 14px; cursor: pointer; border: 1px solid var(--border-color); transition: all 0.3s ease; color: #555; }
+         .date-chip:hover { background: rgba(230, 126, 34, 0.15); border-color: rgba(230, 126, 34, 0.4); color: var(--admin-accent); }
+         .date-chip.active { background: var(--admin-accent); color: white; border-color: var(--admin-accent); font-weight: 500; }
+
+        /* Responsive adjustments - PASTE the @media block from original */
+        @media (max-width: 768px) {
+             body { padding: 10px; overflow: auto; }
+             .container { height: auto; min-height: calc(100vh - 20px); overflow: visible; flex-direction: column; }
+             .content { overflow-y: visible; padding: 15px; }
+             .page { position: relative; width: 100%; top: 0; left: 0; padding: 0; animation: none; display: none; }
+             .page.active { display: block; position: relative; width: 100%; top: 0; left: 0; }
+             .date-selector { flex-direction: column; gap: 15px; align-items: stretch; }
+             .date-selector > div { justify-content: space-around; width: 100%; } /* Adjust button layout */
+             .date-input { width: 100%; }
+
+             /* Mobile Table Styles */
+             table, thead, tbody, th, td, tr { display: block; }
+             thead tr { position: absolute; top: -9999px; left: -9999px; }
+             tr { border: 1px solid #ccc; margin-bottom: 15px; border-radius: 8px; background: rgba(255,255,255,0.85); padding: 10px; }
+             td { border: none; border-bottom: 1px solid #eee; position: relative; padding-left: 45%; text-align: right; min-height: 38px; display: flex; align-items: center; justify-content: flex-end; }
+             td:before { position: absolute; top: 50%; left: 15px; transform: translateY(-50%); width: 40%; padding-right: 10px; white-space: nowrap; text-align: left; font-weight: bold; color: var(--admin-accent); font-size: 0.9em; } /* Use admin accent */
+             td:last-child { border-bottom: 0; }
+
+             /* Specific labels for tables */
+             #attendance-table td:nth-of-type(1):before { content: "Roll No"; }
+             #attendance-table td:nth-of-type(2):before { content: "Name"; }
+             #attendance-table td:nth-of-type(3):before { content: "Status"; }
+
+             /* Labels for Student Management Table */
+             #students-table td:nth-of-type(1):before { content: "Roll No"; }
+             #students-table td:nth-of-type(2):before { content: "Name"; }
+             #students-table td:nth-of-type(3):before { content: "Course"; }
+             #students-table td:nth-of-type(4):before { content: "Action"; }
+
+
+             td select.attendance-select { width: auto; min-width: 120px; }
+             td .btn-delete-small { padding: 5px 10px; font-size: 12px; } /* Adjust delete button size */
+
+             .nav-item { padding: 8px 15px; font-size: 20px; }
+             .highlight { height: 2px; }
+             .toast { width: calc(100% - 30px); bottom: 15px; left: 15px; transform: translateX(0) translateY(20px); }
+             .toast.show { transform: translateX(0) translateY(0); }
+             .toast.hide { transform: translateX(0) translateY(20px); }
+
+             .add-student-form { flex-direction: column; } /* Stack form elements */
+             .add-student-form input { width: 100%; }
+             .add-student-form button { width: 100%; }
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Attendance Admin</h1>
-
-        <!-- Manage Students Section -->
-        <div class="section">
-            <h2>Manage Students</h2>
-            <div id="student-error" class="error"></div>
-            <div id="student-success" class="success"></div>
-            <div>
-                <label for="new-rollno">Roll No:</label>
-                <input type="text" id="new-rollno">
-            </div>
-            <div>
-                <label for="new-name">Name:</label>
-                <input type="text" id="new-name">
-            </div>
-            <button id="add-student-btn" class="btn-primary">Add Student</button>
-
-            <h3>Current Students</h3>
-             <div id="student-list-loading">Loading students...</div>
-            <div id="student-list">
-                <!-- Student list items will be added here by JS -->
-            </div>
+        <div class="topbar">
+            <!-- Admin Navigation -->
+            <div class="nav-item active" data-page="attendance" title="Mark Attendance"><i class="fas fa-calendar-check"></i></div>
+            <div class="nav-item" data-page="students" title="Manage Students"><i class="fas fa-users-cog"></i></div>
+            <!-- Add Metrics/Ranking back if desired for admin -->
+            <!-- <div class="nav-item" data-page="metrics" title="Metrics"><i class="fas fa-chart-bar"></i></div> -->
+            <!-- <div class="nav-item" data-page="ranking" title="Ranking"><i class="fas fa-trophy"></i></div> -->
+            <div class="highlight"></div>
         </div>
 
-        <!-- Mark Attendance Section -->
-        <div class="section">
-            <h2>Mark Attendance</h2>
-            <div id="attendance-error" class="error"></div>
-            <div id="attendance-success" class="success"></div>
-            <div>
-                <label for="admin-attendance-date">Date:</label>
-                <input type="date" id="admin-attendance-date">
+        <div class="content">
+            <!-- Attendance Marking Page -->
+            <div id="attendance-page" class="page active">
+                <h1>Mark Daily Attendance</h1>
+                <div class="date-selector">
+                    <input type="date" id="attendance-date" class="date-input">
+                    <div>
+                        <button id="load-btn" class="btn">Load Date</button>
+                        <button id="save-btn" class="btn btn-save">Save Attendance</button>
+                        <button id="print-btn" class="btn btn-print">Print Present List</button>
+                    </div>
+                </div>
+                 <!-- Error message placeholder -->
+                <div id="attendance-error" class="error-message"></div>
+                <!-- History of recorded dates -->
+                <div class="date-history" id="date-history"></div>
+                <!-- Attendance Table (Editable) -->
+                <table id="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>Roll No</th>
+                            <th>Student Name</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-tbody"></tbody>
+                </table>
             </div>
-            <button id="admin-load-btn" class="btn-primary">Load/Refresh for Date</button>
-            <button id="admin-save-btn" class="btn-secondary">Save Attendance</button>
-            <div id="admin-loading">Loading attendance...</div>
 
-            <table id="admin-attendance-table">
-                <thead>
-                    <tr>
-                        <th>Roll No</th>
-                        <th>Student Name</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-attendance-tbody">
-                    <!-- Attendance rows will be loaded here -->
-                </tbody>
-            </table>
-        </div>
-
-         <!-- Print Attendance Section -->
-        <div class="section">
-            <h2>Print Attendance List</h2>
-            <div id="print-error" class="error"></div>
-             <div>
-                <label for="print-date">Date to Print:</label>
-                <input type="date" id="print-date">
+            <!-- Manage Students Page -->
+            <div id="students-page" class="page">
+                <h1>Manage Students</h1>
+                <div class="manage-students-card">
+                    <h2>Add New Student</h2>
+                    <div id="add-student-error" class="error-message"></div>
+                    <form id="add-student-form" class="add-student-form">
+                        <input type="text" id="new-roll-no" placeholder="Roll Number (e.g., 220XXX)" required>
+                        <input type="text" id="new-student-name" placeholder="Full Name" required>
+                        <input type="text" id="new-student-course" placeholder="Course (Optional)">
+                        <button type="submit" class="btn btn-save">Add Student</button>
+                    </form>
+                </div>
+                 <div class="manage-students-card">
+                    <h2>Current Student List</h2>
+                    <table id="students-table">
+                        <thead>
+                            <tr>
+                                <th>Roll No</th>
+                                <th>Name</th>
+                                <th>Course</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-tbody">
+                            <!-- Student list populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <button id="print-btn" class="btn-print">Prepare & Print List</button>
-        </div>
 
+             <!-- Metrics Page (Optional for Admin) -->
+            <!-- <div id="metrics-page" class="page"> ... Copy from Frontend if needed ... </div> -->
+
+            <!-- Ranking Page (Optional for Admin) -->
+            <!-- <div id="ranking-page" class="page"> ... Copy from Frontend if needed ... </div> -->
+
+        </div> <!-- End Content -->
+    </div> <!-- End Container -->
+
+     <!-- Loading Spinner -->
+    <div class="loading" id="loading-spinner">
+        <div class="spinner"></div>
     </div>
 
-    <!-- Hidden section for printing content -->
-    <div id="print-section" style="display: none;">
-         <h2 id="print-title">Attendance List</h2>
-         <h3 id="print-date-display">Date:</h3>
-         <table id="print-table">
-             <thead>
-                 <tr><th>Roll No</th><th>Name</th><th>Status</th></tr>
-             </thead>
-             <tbody id="print-tbody"></tbody>
-         </table>
-    </div>
+    <!-- Toast Message -->
+    <div class="toast" id="toast-message"></div>
 
-
+    <!-- JavaScript Implementation -->
     <script>
-        // Embedded JavaScript Start
         document.addEventListener('DOMContentLoaded', () => {
-            // DOM Elements
-            const studentListDiv = document.getElementById('student-list');
-            const addStudentBtn = document.getElementById('add-student-btn');
-            const newRollnoInput = document.getElementById('new-rollno');
-            const newNameInput = document.getElementById('new-name');
-            const studentErrorDiv = document.getElementById('student-error');
-            const studentSuccessDiv = document.getElementById('student-success');
-            const studentListLoading = document.getElementById('student-list-loading');
 
-            const adminAttendanceDateInput = document.getElementById('admin-attendance-date');
-            const adminLoadBtn = document.getElementById('admin-load-btn');
-            const adminSaveBtn = document.getElementById('admin-save-btn');
-            const adminAttendanceTbody = document.getElementById('admin-attendance-tbody');
-            const attendanceErrorDiv = document.getElementById('attendance-error');
-            const attendanceSuccessDiv = document.getElementById('attendance-success');
-            const adminLoadingDiv = document.getElementById('admin-loading');
+            // --- Configuration ---
+            const API_BASE_URL = ''; // Relative path to API endpoints on the same server
+            const DEFAULT_STATUS = "absent";
+            const TOAST_DURATION = 3000;
 
-            const printDateInput = document.getElementById('print-date');
+            // --- Global State ---
+            let STUDENTS = []; // Populated from API
+            let attendanceDataCache = {}; // Cache for loaded attendance { date: [...] }
+            let currentPage = "attendance";
+            // Adjust pageIds based on included admin pages
+            const pageIds = {"attendance": "attendance-page", "students": "students-page"};
+            let toastTimerId = null;
+            let recordedDates = new Set(); // Keep track of dates with saved records
+
+            // --- DOM Element References ---
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const toastMessageElement = document.getElementById('toast-message');
+            // Attendance Page
+            const attendanceTbody = document.getElementById('attendance-tbody');
+            const attendanceDateInput = document.getElementById('attendance-date');
+            const attendanceErrorElement = document.getElementById('attendance-error');
+            const dateHistoryElement = document.getElementById('date-history');
+            const loadBtn = document.getElementById('load-btn');
+            const saveBtn = document.getElementById('save-btn');
             const printBtn = document.getElementById('print-btn');
-            const printErrorDiv = document.getElementById('print-error');
-            const printSectionDiv = document.getElementById('print-section');
-            const printTitleH2 = document.getElementById('print-title');
-            const printDateDisplayH3 = document.getElementById('print-date-display');
-            const printTbody = document.getElementById('print-tbody');
+            // Students Page
+            const studentsTbody = document.getElementById('students-tbody');
+            const addStudentForm = document.getElementById('add-student-form');
+            const newRollNoInput = document.getElementById('new-roll-no');
+            const newStudentNameInput = document.getElementById('new-student-name');
+            const newStudentCourseInput = document.getElementById('new-student-course');
+            const addStudentErrorElement = document.getElementById('add-student-error');
+            // Common
+            const contentElement = document.querySelector('.content');
+            const navItems = document.querySelectorAll('.nav-item');
+            const highlightElement = document.querySelector('.highlight');
 
-            let currentAdminStudents = []; // Cache students for admin view
-
-            // --- Utility Functions ---
-            function showAdminLoading(show = true) {
-                adminLoadingDiv.classList.toggle('active', show);
+            // --- Utility Functions (Mostly unchanged) ---
+            function getTodayDate() { return new Date().toISOString().split('T')[0]; }
+            function showLoading(show = true) { loadingSpinner.classList.toggle("active", show); }
+            function showToast(message, type = "success", duration = TOAST_DURATION) {
+                 toastMessageElement.textContent = message;
+                 toastMessageElement.className = `toast ${type}`;
+                 if (toastTimerId) clearTimeout(toastTimerId);
+                 requestAnimationFrame(() => {
+                    toastMessageElement.classList.add("show");
+                    toastMessageElement.classList.remove("hide");
+                 });
+                 toastTimerId = setTimeout(() => hideToast(toastMessageElement), duration);
             }
-            function showStudentListLoading(show = true) {
-                studentListLoading.style.display = show ? 'block' : 'none';
+            function hideToast(toastElement) {
+                toastElement.classList.add("hide");
+                toastElement.classList.remove("show");
+                toastTimerId = null;
             }
-
-            function displayMessage(element, message, isError = true) {
-                if (!element) return; // Guard against null elements
-                element.textContent = message;
-                element.className = isError ? 'error' : 'success';
-                element.style.display = message ? 'block' : 'none';
-                // Auto-hide success messages after a delay
-                if (!isError && message) {
-                    setTimeout(() => {
-                        if (element.textContent === message) { // Only hide if message hasn't changed
-                             element.textContent = '';
-                             element.style.display = 'none';
-                        }
-                    }, 3500); // Slightly longer timeout
-                }
+             function showError(elementId, message = "", show = true) {
+                const errorElement = document.getElementById(elementId);
+                if (!errorElement) return;
+                errorElement.textContent = message;
+                errorElement.classList.toggle("active", show && message);
             }
+            function consoleLog(message) { console.log(`Admin App: ${message}`); }
 
-            // --- API Fetch Wrapper ---
-            async function fetchAdminData(url, options = {}, showLoadingIndicator = true) {
-                if (showLoadingIndicator) showAdminLoading(true);
-                // Clear previous messages before fetch
-                displayMessage(studentErrorDiv, '', false);
-                displayMessage(attendanceErrorDiv, '', false);
-                displayMessage(printErrorDiv, '', false);
 
+            // --- API Interaction ---
+            async function apiRequest(url, options = {}) {
+                showLoading(true);
                 try {
-                    const response = await fetch(url, options);
-                    const isJson = response.headers.get('content-type')?.includes('application/json');
-                    const data = isJson ? await response.json() : await response.text();
+                    const response = await fetch(`${API_BASE_URL}${url}`, options);
+                    const responseData = await response.json(); // Assume JSON response
 
                     if (!response.ok) {
-                         let errorMsg = `HTTP error ${response.status}`;
-                         if(isJson && data.message) {
-                             errorMsg += `: ${data.message}`;
-                         } else if (!isJson && typeof data === 'string' && data.length < 200) {
-                             errorMsg += `: ${data}`;
-                         }
+                        // Use message from server response if available
+                        const errorMsg = responseData.message || `HTTP error! status: ${response.status}`;
                         throw new Error(errorMsg);
                     }
-                    return data;
+                    return responseData; // Return parsed JSON data on success
                 } catch (error) {
-                    console.error(`Admin Fetch error for ${url}:`, error);
-                    // Display error in a relevant section
-                    let errorTargetDiv = attendanceErrorDiv; // Default
-                    if (url.includes('/api/students')) errorTargetDiv = studentErrorDiv;
-                    else if (url.includes('/api/attendance') && options.method !== 'POST') errorTargetDiv = attendanceErrorDiv;
-                    else if (url.includes('print')) errorTargetDiv = printErrorDiv;
-                     else if (url.includes('/api/attendance') && options.method === 'POST') errorTargetDiv = attendanceErrorDiv; // Show save errors too
-
-                    displayMessage(errorTargetDiv, `API Error: ${error.message}`);
-                    throw error;
+                    console.error(`API Request Failed: ${options.method || 'GET'} ${url}`, error);
+                    // Show specific error from server or generic network error
+                    showToast(error.message || "Network error or server unavailable", "error", 5000);
+                    throw error; // Re-throw the error for calling function to handle
                 } finally {
-                   if (showLoadingIndicator) showAdminLoading(false);
+                    showLoading(false);
                 }
             }
 
-
-            // --- Student Management ---
-            async function loadStudents() {
-                 showStudentListLoading(true);
-                 displayMessage(studentErrorDiv, '', false);
-                 studentListDiv.innerHTML = '';
-                 try {
-                    // Use the API wrapper, but hide the main loading indicator
-                    currentAdminStudents = await fetchAdminData('/api/students', {}, false);
-                    if (currentAdminStudents && currentAdminStudents.length > 0) {
-                        currentAdminStudents.sort((a, b) => a.roll_no.localeCompare(b.roll_no));
-                        currentAdminStudents.forEach(student => {
-                            const div = document.createElement('div');
-                            div.className = 'student-list-item';
-                            div.innerHTML = `
-                                <span>${student.roll_no} - ${student.name}</span>
-                                <button class="btn-danger" data-roll="${student.roll_no}">Delete</button>
-                            `;
-                            div.querySelector('button').addEventListener('click', handleDeleteStudent);
-                            studentListDiv.appendChild(div);
-                        });
-                    } else {
-                        studentListDiv.innerHTML = '<p>No students found.</p>';
+             // --- Student Management ---
+            async function fetchStudents() {
+                try {
+                    STUDENTS = await apiRequest('/api/students');
+                    consoleLog(`Fetched ${STUDENTS.length} students.`);
+                    renderStudentList();
+                    // Also need to rebuild the attendance table if it's currently visible
+                    if (currentPage === 'attendance') {
+                        initAttendanceTable();
+                        // Optionally reload current date's attendance
+                         loadAttendanceForDate(attendanceDateInput.value);
                     }
-                 } catch (error) {
-                     // Error already displayed by fetchAdminData in studentErrorDiv
-                     studentListDiv.innerHTML = '<p style="color: red;">Failed to load students list.</p>';
-                 } finally {
-                    showStudentListLoading(false);
-                 }
+                } catch (error) {
+                    // Error shown by apiRequest
+                    STUDENTS = []; // Ensure student list is empty on failure
+                    renderStudentList(); // Render empty state
+                    initAttendanceTable(); // Render empty state
+                }
             }
 
-            async function handleAddStudent() {
-                const rollNo = newRollnoInput.value.trim();
-                const name = newNameInput.value.trim();
-                displayMessage(studentErrorDiv, '', false);
-                displayMessage(studentSuccessDiv, '', false);
-
-                if (!rollNo || !name) {
-                    displayMessage(studentErrorDiv, 'Roll No and Name cannot be empty.');
+            function renderStudentList() {
+                studentsTbody.innerHTML = ""; // Clear list
+                 if (!STUDENTS || STUDENTS.length === 0) {
+                    studentsTbody.innerHTML = '<tr><td colspan="4">No students found. Add students using the form above.</td></tr>';
                     return;
                 }
 
+                STUDENTS.forEach(student => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td data-label="Roll No">${student.roll_no}</td>
+                        <td data-label="Name">${student.name}</td>
+                        <td data-label="Course">${student.course || 'N/A'}</td>
+                        <td data-label="Action">
+                            <button class="btn btn-delete btn-delete-small" data-roll="${student.roll_no}">Delete</button>
+                        </td>
+                    `;
+                    // Add event listener for the delete button
+                    row.querySelector('.btn-delete').addEventListener('click', handleDeleteStudent);
+                    studentsTbody.appendChild(row);
+                });
+            }
+
+             async function handleAddStudent(event) {
+                event.preventDefault(); // Prevent form submission
+                showError("add-student-error", "", false); // Clear previous errors
+
+                const rollNo = newRollNoInput.value.trim();
+                const name = newStudentNameInput.value.trim();
+                const course = newStudentCourseInput.value.trim();
+
+                if (!rollNo || !name) {
+                    showError("add-student-error", "Roll Number and Name cannot be empty.", true);
+                    return;
+                }
+                 // Basic roll number format check (optional)
+                 // if (!/^\d+$/.test(rollNo)) {
+                 //    showError("add-student-error", "Roll Number should only contain digits.", true);
+                 //    return;
+                 // }
+
                 try {
-                    const newStudent = await fetchAdminData('/api/students', {
+                    const newStudent = await apiRequest('/api/students', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ roll_no: rollNo, name: name })
-                    }, true); // Show loading for this action
-                    displayMessage(studentSuccessDiv, `Student ${newStudent.name} added successfully.`, false);
-                    newRollnoInput.value = '';
-                    newNameInput.value = '';
-                    await loadStudents(); // Refresh the list (await ensures it finishes)
-                    await loadAttendanceForEditing(); // Also refresh attendance table if date is selected
+                        body: JSON.stringify({ roll_no: rollNo, name: name, course: course })
+                    });
+                    showToast(`Student ${newStudent.name} added successfully!`, "success");
+                    addStudentForm.reset(); // Clear the form
+                    await fetchStudents(); // Refresh the student list & potentially attendance table
                 } catch (error) {
-                     // Error message handled by fetchAdminData
-                     console.error("Add student failed:", error);
+                    // Error toast is shown by apiRequest, show specific message near form
+                     showError("add-student-error", error.message || "Failed to add student.", true);
                 }
             }
 
             async function handleDeleteStudent(event) {
                 const rollNo = event.target.dataset.roll;
+                const student = STUDENTS.find(s => s.roll_no === rollNo);
+                const studentName = student ? student.name : rollNo;
+
                 if (!rollNo) return;
 
-                // Find student name for confirmation message
-                const studentToDelete = currentAdminStudents.find(s => s.roll_no === rollNo);
-                const confirmMsg = studentToDelete
-                  ? `Are you sure you want to delete student ${studentToDelete.name} (${rollNo})? This cannot be undone.`
-                  : `Are you sure you want to delete student ${rollNo}? This cannot be undone.`;
-
-
-                if (!confirm(confirmMsg)) {
+                // Confirmation dialog
+                if (!confirm(`Are you sure you want to delete student ${studentName} (${rollNo})? This will also remove their past attendance records.`)) {
                     return;
                 }
 
-                displayMessage(studentErrorDiv, '', false);
-                displayMessage(studentSuccessDiv, '', false);
-
                 try {
-                     await fetchAdminData(`/api/students/${rollNo}`, { method: 'DELETE' }, true); // Show loading
-                    displayMessage(studentSuccessDiv, `Student ${rollNo} deleted successfully.`, false);
-                    await loadStudents(); // Refresh the list
-                    await loadAttendanceForEditing(); // Also refresh attendance table if date is selected
+                    await apiRequest(`/api/students/${rollNo}`, { method: 'DELETE' });
+                    showToast(`Student ${studentName} deleted successfully.`, "success");
+                    await fetchStudents(); // Refresh list and attendance table
+                    await fetchRecordedDates(); // Refresh date history as records might be removed
                 } catch (error) {
-                    // Error handled by fetchAdminData
-                    console.error("Delete student failed:", error);
+                    // Error toast shown by apiRequest
                 }
             }
 
             // --- Attendance Management ---
-            async function loadAttendanceForEditing() {
-                const date = adminAttendanceDateInput.value;
-                displayMessage(attendanceErrorDiv, '', false);
-                displayMessage(attendanceSuccessDiv, '', false);
-                adminAttendanceTbody.innerHTML = '';
+             function initAttendanceTable() {
+                 attendanceTbody.innerHTML = ""; // Clear existing rows
+                 if (!STUDENTS || STUDENTS.length === 0) {
+                     attendanceTbody.innerHTML = '<tr><td colspan="3">No student data. Add students in the "Manage Students" tab first.</td></tr>';
+                     consoleLog("Admin: Cannot init attendance table, no students.");
+                     return;
+                 }
+                 STUDENTS.forEach(student => {
+                     const row = document.createElement('tr');
+                     row.innerHTML = `
+                         <td data-label="Roll No">${student.roll_no}</td>
+                         <td data-label="Name">${student.name}</td>
+                         <td data-label="Status">
+                             <select class="attendance-select" data-roll="${student.roll_no}">
+                                 <option value="">Select</option>
+                                 <option value="present">Present</option>
+                                 <option value="absent">Absent</option>
+                             </select>
+                         </td>
+                     `;
+                     attendanceTbody.appendChild(row);
+                 });
+                 consoleLog("Admin: Attendance table structure initialized.");
+            }
 
-                if (!date) {
-                    displayMessage(attendanceErrorDiv, 'Please select a date to load attendance.');
-                    return;
-                }
+            async function fetchRecordedDates() {
+                 // Fetch all attendance keys to update the history
+                 try {
+                     // Reuse the generic GET /api/attendance endpoint used by frontend
+                     const allAttendance = await apiRequest('/api/attendance');
+                     recordedDates = new Set(Object.keys(allAttendance));
+                     updateDateHistory();
+                 } catch (error) {
+                     consoleLog("Failed to fetch recorded dates for history.");
+                     // Don't necessarily show error, history just might be incomplete
+                     updateDateHistory(); // Render with current set (might be empty)
+                 }
+            }
 
-                // Ensure student list is current
-                if (!currentAdminStudents || currentAdminStudents.length === 0) {
-                     try {
-                         console.log("Student list empty or outdated, reloading...");
-                         await loadStudents(); // Try reloading students first
-                         if (!currentAdminStudents || currentAdminStudents.length === 0) {
-                            displayMessage(attendanceErrorDiv, 'Cannot load attendance: Student list is empty or failed to load.');
-                            return;
-                         }
-                     } catch {
-                         displayMessage(attendanceErrorDiv, 'Cannot load attendance: Failed to load student list.');
-                        return;
-                     }
-                }
+            function updateDateHistory() {
+                dateHistoryElement.innerHTML = ""; // Clear existing chips
+                const dates = Array.from(recordedDates).sort().reverse(); // Sort newest first
 
-                showAdminLoading(true);
-                try {
-                    const existingAttendance = await fetchAdminData(`/api/attendance/${date}`, {}, false); // Use API wrapper
+                dates.forEach(date => {
+                    const chip = document.createElement('div');
+                    chip.className = 'date-chip';
+                    chip.textContent = date;
+                    chip.dataset.date = date;
+                    chip.addEventListener('click', () => {
+                         attendanceDateInput.value = date; // Set date input
+                         loadAttendanceForDate(date);     // Trigger load
+                    });
+                    dateHistoryElement.appendChild(chip);
+                });
+                highlightActiveDateChip(); // Highlight based on current input value
+            }
 
-                    adminAttendanceTbody.innerHTML = ''; // Clear just before populating
-                     currentAdminStudents.forEach(student => {
-                         const existingRecord = existingAttendance.find(att => att.roll_no === student.roll_no);
-                         const currentStatus = existingRecord ? existingRecord.status : 'absent'; // Default to absent
-
-                         const row = document.createElement('tr');
-                         row.innerHTML = `
-                            <td>${student.roll_no}</td>
-                            <td>${student.name}</td>
-                            <td>
-                                <select class="attendance-select" data-roll="${student.roll_no}">
-                                    <option value="present" ${currentStatus === 'present' ? 'selected' : ''}>Present</option>
-                                    <option value="absent" ${currentStatus === 'absent' ? 'selected' : ''}>Absent</option>
-                                </select>
-                            </td>
-                         `;
-                         adminAttendanceTbody.appendChild(row);
-                     });
-                     if (existingAttendance.length > 0) {
-                        displayMessage(attendanceSuccessDiv, `Loaded existing attendance for ${date}.`, false);
-                     } else {
-                        displayMessage(attendanceSuccessDiv, `Loaded students for ${date}. Defaulted to 'Absent'.`, false);
-                     }
-
-                } catch (error) {
-                     // Error already displayed by fetchAdminData
-                     adminAttendanceTbody.innerHTML = `<tr><td colspan="3" style="color:red;">Error loading attendance table.</td></tr>`;
-                } finally {
-                    showAdminLoading(false);
-                }
+             function highlightActiveDateChip() {
+                 const currentDate = attendanceDateInput.value;
+                 document.querySelectorAll(".date-chip").forEach(chip => {
+                     chip.classList.toggle("active", chip.dataset.date === currentDate);
+                 });
             }
 
 
-            async function handleSaveAttendance() {
-                const date = adminAttendanceDateInput.value;
-                displayMessage(attendanceErrorDiv, '', false);
-                displayMessage(attendanceSuccessDiv, '', false);
-
-                if (!date) {
-                    displayMessage(attendanceErrorDiv, 'Please select a date before saving.');
-                    return;
-                }
-
-                const selects = adminAttendanceTbody.querySelectorAll('select.attendance-select');
-                if (selects.length === 0) {
-                     displayMessage(attendanceErrorDiv, 'No students loaded to save attendance for. Click "Load/Refresh for Date" first.');
-                     return;
-                }
-
-                let attendanceList = [];
-                selects.forEach(select => {
-                     const rollNo = select.dataset.roll;
-                     const student = currentAdminStudents.find(s => s.roll_no === rollNo);
-                     attendanceList.push({
-                         roll_no: rollNo,
-                         name: student ? student.name : 'Unknown Student',
-                         status: select.value
-                     });
+            async function loadAttendanceForDate(date) {
+                consoleLog(`Admin: Loading attendance for date: ${date}`);
+                showError("attendance-error", "", false); // Clear previous errors
+                attendanceTbody.querySelectorAll('.attendance-select').forEach(s => {
+                     s.value = ""; // Reset selects
+                     s.classList.remove('error-input');
                 });
 
-                try {
-                    const result = await fetchAdminData(`/api/attendance/${date}`, {
-                         method: 'POST',
-                         headers: { 'Content-Type': 'application/json' },
-                         body: JSON.stringify(attendanceList)
-                    }, true); // Show loading
-                     displayMessage(attendanceSuccessDiv, result.message || `Attendance for ${date} saved successfully.`, false);
-                } catch (error) {
-                     // Error message handled by fetchAdminData
-                     console.error("Save attendance failed:", error);
-                }
+                 if (!date) {
+                     showToast("Please select a date to load.", "info");
+                     highlightActiveDateChip();
+                     return;
+                 }
+
+                 if (!STUDENTS || STUDENTS.length === 0) {
+                     showError("attendance-error", "Cannot load attendance, student list is empty.", true);
+                     highlightActiveDateChip();
+                     return;
+                 }
+                 highlightActiveDateChip(); // Highlight the selected date chip
+
+
+                 // Check cache first
+                 if (attendanceDataCache[date]) {
+                    consoleLog("Loading attendance from cache.");
+                    populateAttendanceTable(attendanceDataCache[date]);
+                    showToast(`Attendance loaded for ${date} (from cache).`, "info", 1500);
+                    return;
+                 }
+
+                 // If not in cache, fetch from server
+                 try {
+                    const dateData = await apiRequest(`/api/attendance/${date}`);
+                    attendanceDataCache[date] = dateData; // Store in cache
+                    populateAttendanceTable(dateData);
+                     if (dateData.length > 0) {
+                         showToast(`Attendance loaded for ${date} from server.`, "info");
+                     } else {
+                         showToast(`No saved record for ${date}. Set defaults.`, "info");
+                         // Set default status if no record exists
+                          attendanceTbody.querySelectorAll('.attendance-select').forEach(select => {
+                             select.value = DEFAULT_STATUS;
+                          });
+                     }
+                 } catch (error) {
+                     // Error shown by apiRequest
+                     showError("attendance-error", `Failed to load attendance for ${date}: ${error.message}`, true);
+                     // Clear table or set defaults on load error? Decide based on desired UX
+                     attendanceTbody.querySelectorAll('.attendance-select').forEach(s => s.value = "");
+                 }
             }
 
-             // --- Print Functionality ---
-            async function handlePrint() {
-                const date = printDateInput.value;
-                displayMessage(printErrorDiv, '', false);
-                printTbody.innerHTML = '';
+             function populateAttendanceTable(dateData) {
+                 const attendanceMap = new Map(dateData.map(item => [item.roll_no, item.status]));
 
-                if (!date) {
-                    displayMessage(printErrorDiv, 'Please select a date to print.');
+                 attendanceTbody.querySelectorAll('.attendance-select').forEach(select => {
+                     const rollNo = select.dataset.roll;
+                     const status = attendanceMap.get(rollNo);
+                     if (status) {
+                         select.value = status;
+                     } else {
+                         // If student exists but wasn't in saved data for that day, set default
+                         select.value = DEFAULT_STATUS;
+                         consoleLog(`Student ${rollNo} not found in saved data for this date, setting default.`);
+                     }
+                 });
+             }
+
+            async function saveAttendance() {
+                 const date = attendanceDateInput.value;
+                 if (!date) {
+                    showError("attendance-error", "Please select a date before saving!", true);
+                    showToast("Select a date!", "error");
+                    return;
+                 }
+
+                 let attendanceList = [];
+                 let allSelected = true;
+
+                 showError("attendance-error", "", false); // Clear previous errors
+                 const selects = attendanceTbody.querySelectorAll('.attendance-select');
+                 selects.forEach(s => s.classList.remove('error-input'));
+
+                 if (selects.length === 0 && STUDENTS.length > 0) {
+                     showError("attendance-error", "Attendance table not populated correctly. Try reloading students.", true);
+                     return;
+                 }
+                 if (selects.length === 0 && STUDENTS.length === 0) {
+                      showError("attendance-error", "No students to mark attendance for.", true);
+                      return;
+                 }
+
+
+                 selects.forEach(select => {
+                     const rollNo = select.dataset.roll;
+                     const status = select.value;
+                     if (!status) { // Check for empty value ("Select")
+                         allSelected = false;
+                         select.classList.add('error-input');
+                     }
+                     // Only include students currently in the list
+                     if (STUDENTS.some(s => s.roll_no === rollNo)) {
+                         attendanceList.push({ roll_no: rollNo, status: status });
+                     }
+                 });
+
+                 if (!allSelected) {
+                    showError("attendance-error", "Please select a status (Present/Absent) for all students.", true);
+                    showToast("Incomplete attendance!", "error");
+                    return;
+                 }
+
+                 consoleLog(`Attempting to save attendance for date: ${date}`);
+                 try {
+                    const result = await apiRequest(`/api/attendance/${date}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(attendanceList)
+                    });
+                    showToast(result.message || `Attendance for ${date} saved successfully!`, "success");
+                    attendanceDataCache[date] = attendanceList; // Update cache
+                    recordedDates.add(date); // Add date to history set
+                    updateDateHistory(); // Refresh chips
+                 } catch (error) {
+                    // Error shown by apiRequest
+                    showError("attendance-error", `Failed to save: ${error.message}`, true);
+                 }
+            }
+
+            function handlePrint() {
+                 const date = attendanceDateInput.value;
+                 if (!date) {
+                     showToast("Please select a date to print.", "error");
+                     showError("attendance-error", "Select a date first.", true);
+                     return;
+                 }
+                 showError("attendance-error", "", false); // Clear error
+
+                 // Open the print URL in a new tab
+                 const printUrl = `${API_BASE_URL}/admin/print/${date}`;
+                 window.open(printUrl, '_blank');
+            }
+
+            // --- Navigation ---
+            function switchPage(targetPageId) {
+                if (!pageIds[targetPageId]) {
+                    consoleLog(`Error: Unknown page ID ${targetPageId}`);
                     return;
                 }
+                 if (targetPageId === currentPage) return;
+                 consoleLog(`Admin: Switching page to ${targetPageId}`);
 
-                showAdminLoading(true);
-                try {
-                     const attendanceToPrint = await fetchAdminData(`/api/attendance/${date}`, {}, false); // Use API wrapper
+                 Object.values(pageIds).forEach(pageDomId => {
+                    document.getElementById(pageDomId)?.classList.toggle("active", pageDomId === pageIds[targetPageId]);
+                 });
 
-                    if (!attendanceToPrint || attendanceToPrint.length === 0) {
-                         displayMessage(printErrorDiv, `No attendance records found for ${date} to print.`);
-                         return; // Stop here
-                    }
+                 navItems.forEach(item => {
+                    item.classList.toggle("active", item.dataset.page === targetPageId);
+                 });
 
-                     printDateDisplayH3.textContent = `Date: ${date}`;
-                     printTbody.innerHTML = '';
+                 currentPage = targetPageId;
+                 updateHighlight();
 
-                     attendanceToPrint.sort((a,b) => a.roll_no.localeCompare(b.roll_no)).forEach(record => {
-                         const row = document.createElement('tr');
-                         row.innerHTML = `
-                             <td>${record.roll_no}</td>
-                             <td>${record.name || 'N/A'}</td>
-                             <td>${record.status === 'present' ? 'Present' : 'Absent'}</td>
-                         `;
-                         printTbody.appendChild(row);
-                     });
+                 // Load data specific to the page if needed
+                 if (targetPageId === "students") {
+                    fetchStudents(); // Ensure student list is up-to-date
+                 } else if (targetPageId === "attendance") {
+                     // Ensure attendance table is built with current students
+                     initAttendanceTable();
+                     // Reload current date's attendance in case students changed
+                     loadAttendanceForDate(attendanceDateInput.value);
+                     // Ensure date history is up-to-date
+                     fetchRecordedDates();
+                 }
+                 // Add conditions for Metrics/Ranking if they are included
+            }
 
-                     // Wait a tiny moment for DOM to update before printing
-                     setTimeout(() => {
-                         printSectionDiv.style.display = 'block';
-                         window.print();
-                         printSectionDiv.style.display = 'none';
-                     }, 100);
+            function onNavClick(event) {
+                const targetPage = event.currentTarget.dataset.page;
+                if (targetPage) switchPage(targetPage);
+            }
 
-
-                } catch (error) {
-                    // Error already displayed by fetchAdminData
-                    console.error("Print preparation failed:", error);
-                } finally {
-                     showAdminLoading(false);
+             function updateHighlight() {
+                const activeNav = document.querySelector(".nav-item.active");
+                if (activeNav && highlightElement) {
+                    highlightElement.style.left = `${activeNav.offsetLeft}px`;
+                    highlightElement.style.width = `${activeNav.offsetWidth}px`;
+                } else if (highlightElement) {
+                     highlightElement.style.width = `0px`;
                 }
             }
 
             // --- Initialization ---
-            function initAdmin() {
-                console.log("Initializing Admin Interface...");
-                const today = new Date().toISOString().split('T')[0];
-                adminAttendanceDateInput.value = today;
-                printDateInput.value = today;
-
-                addStudentBtn.addEventListener('click', handleAddStudent);
-                adminLoadBtn.addEventListener('click', loadAttendanceForEditing);
-                adminSaveBtn.addEventListener('click', handleSaveAttendance);
+            function initEventListeners() {
+                navItems.forEach(item => item.addEventListener('click', onNavClick));
+                // Attendance
+                loadBtn.addEventListener('click', () => loadAttendanceForDate(attendanceDateInput.value));
+                saveBtn.addEventListener('click', saveAttendance);
                 printBtn.addEventListener('click', handlePrint);
-
-                // Delegate delete button clicks from the student list container
-                 studentListDiv.addEventListener('click', (event) => {
-                    if (event.target.tagName === 'BUTTON' && event.target.dataset.roll) {
-                        handleDeleteStudent(event);
-                    }
-                 });
-
-                loadStudents(); // Load initial student list on page load
+                attendanceDateInput.addEventListener('change', (e) => loadAttendanceForDate(e.target.value)); // Load on date change too
+                // Students
+                addStudentForm.addEventListener('submit', handleAddStudent);
+                // Common
+                window.addEventListener('resize', updateHighlight);
+                consoleLog("Admin: Event listeners initialized.");
             }
 
-            initAdmin();
-        });
-        // Embedded JavaScript End
+             async function initAdminApp() {
+                consoleLog("Initializing Admin Attendance System...");
+                showLoading(true);
+                initEventListeners();
+
+                try {
+                    // 1. Fetch initial student list
+                    await fetchStudents(); // This also renders the student list table
+
+                     // 2. Fetch recorded dates for history chips
+                    await fetchRecordedDates();
+
+                    // 3. Initialize attendance table structure (needs STUDENTS)
+                    initAttendanceTable();
+
+                    // 4. Set default date for attendance page and load its data
+                    const today = getTodayDate();
+                    attendanceDateInput.value = today;
+                    attendanceDateInput.max = today; // Prevent future dates? Optional for admin.
+                    consoleLog(`Admin: Set date to today: ${today}`);
+                    await loadAttendanceForDate(today); // Load today's data
+
+                    // 5. Set initial highlight
+                    setTimeout(updateHighlight, 150);
+
+                    showToast("Admin system ready", "success", 2000);
+
+                } catch (e) {
+                     console.error(`Critical Error during admin app initialization: ${e}`);
+                     showToast("Error initializing admin application!", "error", 5000);
+                     // Display error in content area
+                     if (contentElement) {
+                         contentElement.innerHTML = `<h1>Initialization Error</h1><p>Could not start the admin application. API might be down or data file corrupted.</p><p>Error: ${e.message}</p>`;
+                     }
+                 } finally {
+                    showLoading(false);
+                 }
+            }
+
+            // --- Start the application ---
+            initAdminApp();
+
+        }); // End DOMContentLoaded
     </script>
 </body>
 </html>
