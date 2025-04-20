@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Attendance View</title>
+    <title>Student Attendance (View)</title>
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        /* Embedded CSS Start */
+        /* PASTE THE ENTIRE <style>...</style> block from your original HTML file here */
         :root {
             --primary-color: #4a90e2;
             --secondary-color: #50c878;
@@ -132,8 +132,7 @@
 
         .date-selector {
             display: flex;
-            /* justify-content: space-between; */ /* Removed as buttons are gone */
-            justify-content: flex-start; /* Align items to the start */
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 25px;
             background: rgba(255, 255, 255, 0.2); /* Slightly more visible */
@@ -142,13 +141,8 @@
             border: 1px solid var(--border-color);
             backdrop-filter: blur(5px);
             flex-wrap: wrap; /* Allow wrapping */
-            gap: 20px; /* Space between items when wrapped */
+            gap: 15px; /* Space between items when wrapped */
         }
-         #attendance-page .date-selector label {
-            font-weight: 500;
-            color: var(--text-color);
-            margin-right: 5px; /* Space between label and input */
-         }
 
         .date-input {
             padding: 10px 15px; /* Slightly larger padding */
@@ -160,7 +154,36 @@
             min-width: 180px; /* Ensure minimum width */
         }
 
-        /* Buttons .btn styles removed as they are not in this view */
+        .date-selector > div { /* Container for buttons */
+             display: flex;
+             gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px; /* Slightly larger buttons */
+            border-radius: 8px;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn:active {
+            transform: translateY(0px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Hide save button on frontend */
+        /* .btn-save { display: none; } */
 
         table {
             width: 100%;
@@ -200,12 +223,12 @@
             background: rgba(74, 144, 226, 0.08); /* Slightly darker hover */
         }
 
-        /* Select styles removed as status is text */
+        /* Remove select styling */
+        /* select.attendance-select { ... } */
 
-        /* Status text styles */
-        #attendance-tbody .status-present { color: var(--green-color); font-weight: 500; }
-        #attendance-tbody .status-absent { color: var(--red-color); font-weight: 500; }
-        #attendance-tbody .status-unknown { color: #888; font-style: italic; } /* For missing data */
+        .status-present { color: var(--green-color); font-weight: 600; text-transform: capitalize; }
+        .status-absent { color: var(--red-color); font-weight: 600; text-transform: capitalize; }
+        .status-unknown { color: #888; font-style: italic; } /* Style for no record */
 
         .metrics-card {
             background: rgba(255, 255, 255, 0.8); /* More opaque */
@@ -281,7 +304,9 @@
         .average { color: var(--yellow-color); font-weight: 600; }
         .poor { color: #c0392b; font-weight: 600; } /* Slightly different red */
 
-        /* Pulse highlight removed */
+        /* Remove pulse animation if not needed */
+        /* .status-highlight { ... } */
+        /* @keyframes pulse { ... } */
 
         .loading {
             position: fixed;
@@ -386,6 +411,7 @@
                  left: 0;
                  padding: 0;
                  animation: none; /* Disable fade on small screens if preferred */
+                 /* Ensure absolute positioning is truly off */
                  display: none; /* Keep hidden by default */
              }
              .page.active {
@@ -401,7 +427,7 @@
                  gap: 15px;
                  align-items: stretch;
              }
-             /* .date-selector > div { justify-content: space-between; width: 100%; } Removed as buttons are gone */
+             .date-selector > div { justify-content: space-between; width: 100%; }
              .date-input { width: 100%; }
 
              /* Mobile Table Styles */
@@ -432,6 +458,7 @@
                  justify-content: flex-end; /* Align content to the right */
              }
              td:before {
+                 /* Use CSS to set labels directly */
                  position: absolute;
                  top: 50%;
                  left: 15px;
@@ -449,9 +476,7 @@
              /* Specific labels for tables using CSS variables assigned in JS or directly */
              #attendance-table td:nth-of-type(1):before { content: "Roll No"; }
              #attendance-table td:nth-of-type(2):before { content: "Name"; }
-             #attendance-table td:nth-of-type(3):before { content: "Status"; }
-             #attendance-table td:nth-of-type(3) { justify-content: flex-end; } /* Ensure text aligns right */
-
+             #attendance-table td:nth-of-type(3):before { content: "Status"; } /* Changed from Select */
 
              #metrics-table td:nth-of-type(1):before { content: "Roll No"; }
              #metrics-table td:nth-of-type(2):before { content: "Name"; }
@@ -464,7 +489,8 @@
              #ranking-table td:nth-of-type(3):before { content: "Name"; }
              #ranking-table td:nth-of-type(4):before { content: "Attend %"; }
 
-             /* td select.attendance-select { width: auto; min-width: 120px; }  Removed as no selects here */
+             /* Remove select specific styling */
+             /* td select.attendance-select { width: auto; min-width: 120px; } */
 
              .nav-item { padding: 8px 15px; font-size: 20px; }
              .highlight { height: 2px; }
@@ -473,40 +499,45 @@
              .toast.hide { transform: translateX(0) translateY(20px); } /* Adjust slide down */
              .metrics-grid { grid-template-columns: 1fr; } /* Single column */
         }
-        /* Embedded CSS End */
     </style>
 </head>
 <body>
     <div class="container">
         <div class="topbar">
+            <!-- Navigation items -->
             <div class="nav-item active" data-page="attendance" title="Attendance"><i class="fas fa-calendar-check"></i></div>
             <div class="nav-item" data-page="metrics" title="Metrics"><i class="fas fa-chart-bar"></i></div>
             <div class="nav-item" data-page="ranking" title="Ranking"><i class="fas fa-trophy"></i></div>
-            <div class="highlight"></div>
+            <div class="highlight"></div> <!-- Highlight bar -->
         </div>
 
         <div class="content">
             <!-- Attendance Page -->
             <div id="attendance-page" class="page active">
-                <h1>Daily Attendance View</h1>
-                 <div class="date-selector">
-                    <label for="attendance-date">Select Date to View:</label>
+                <h1>Daily Attendance (View Only)</h1>
+                <div class="date-selector">
                     <input type="date" id="attendance-date" class="date-input">
+                    <div>
+                        <!-- "Load" button is implicit on date change now -->
+                        <!-- <button id="load-btn" class="btn">Load</button> -->
+                         <!-- Save button removed -->
+                    </div>
                 </div>
+                <!-- Error message placeholder -->
                 <div id="attendance-error" class="error-message"></div>
-                <div class="date-history" id="date-history">
-                    <!-- Date chips will be loaded here -->
-                </div>
+                 <!-- History of recorded dates -->
+                <div class="date-history" id="date-history"></div>
+                <!-- Attendance Table -->
                 <table id="attendance-table">
                     <thead>
                         <tr>
                             <th>Roll No</th>
                             <th>Student Name</th>
-                            <th>Status</th>
+                            <th>Status</th> <!-- No longer editable -->
                         </tr>
                     </thead>
                     <tbody id="attendance-tbody">
-                        <!-- Rows will be loaded by JS -->
+                        <!-- Rows will be populated by JS -->
                     </tbody>
                 </table>
             </div>
@@ -574,26 +605,33 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </div> <!-- End Content -->
+    </div> <!-- End Container -->
 
+    <!-- Loading Spinner -->
     <div class="loading" id="loading-spinner">
         <div class="spinner"></div>
     </div>
+
+    <!-- Toast Message -->
     <div class="toast" id="toast-message"></div>
 
+    <!-- JavaScript Implementation -->
     <script>
-        // Embedded JavaScript Start
         document.addEventListener('DOMContentLoaded', () => {
+
             // --- Configuration ---
+            // STUDENTS list will be fetched from the server
+            const API_BASE_URL = ''; // Relative path to API endpoints
             const TOAST_DURATION = 3000;
 
             // --- Global State ---
+            let STUDENTS = []; // Will be populated from API
+            let attendanceData = {}; // In-memory cache of fetched attendance { date: [...] }
             let attendanceCharts = {}; // {chart_id: chart_instance}
             let currentPage = "attendance";
             const pageIds = {"attendance": "attendance-page", "metrics": "metrics-page", "ranking": "ranking-page"};
             let toastTimerId = null;
-            let currentStudents = []; // Cache the student list
 
             // --- DOM Element References ---
             const loadingSpinner = document.getElementById('loading-spinner');
@@ -602,6 +640,8 @@
             const attendanceDateInput = document.getElementById('attendance-date');
             const attendanceErrorElement = document.getElementById('attendance-error');
             const dateHistoryElement = document.getElementById('date-history');
+            // const loadBtn = document.getElementById('load-btn'); // Not used directly
+            // Save button removed
             const totalClassesElement = document.getElementById('total-classes');
             const avgAttendanceElement = document.getElementById('avg-attendance');
             const bestDayElement = document.getElementById('best-day');
@@ -612,7 +652,7 @@
             const navItems = document.querySelectorAll('.nav-item');
             const highlightElement = document.querySelector('.highlight');
 
-            // --- Utility Functions ---
+            // --- Utility Functions (Mostly unchanged) ---
             function getTodayDate() {
                 return new Date().toISOString().split('T')[0];
             }
@@ -621,312 +661,433 @@
                 loadingSpinner.classList.toggle("active", show);
             }
 
-            function showToast(message, type = "info", duration = TOAST_DURATION) { // Default to info
+             function showToast(message, type = "success", duration = TOAST_DURATION) {
                 toastMessageElement.textContent = message;
                 toastMessageElement.className = `toast ${type}`;
+
                 if (toastTimerId) clearTimeout(toastTimerId);
-                toastMessageElement.offsetHeight; // Reflow
-                toastMessageElement.classList.add("show");
-                toastMessageElement.classList.remove("hide");
+
+                requestAnimationFrame(() => { // Use rAF for smoother transitions
+                    toastMessageElement.classList.add("show");
+                    toastMessageElement.classList.remove("hide");
+                });
+
                 toastTimerId = setTimeout(() => hideToast(toastMessageElement), duration);
             }
 
-            function hideToast(toastElement) {
+             function hideToast(toastElement) {
                 toastElement.classList.add("hide");
                 toastElement.classList.remove("show");
                 toastTimerId = null;
             }
 
-             function showError(elementId, message = "", show = true) {
+            function showError(elementId, message = "", show = true) {
                 const errorElement = document.getElementById(elementId);
                 if (!errorElement) return;
                 errorElement.textContent = message;
-                errorElement.classList.toggle("active", show);
+                errorElement.classList.toggle("active", show && message);
             }
 
+            function consoleLog(message) {
+                console.log(`Frontend App: ${message}`);
+            }
+
+            // --- Data Fetching ---
+            async function fetchData() {
+                 consoleLog("Fetching initial data from server...");
+                 showLoading(true);
+                 try {
+                    // Fetch students and all attendance data in parallel
+                    const [studentsRes, attendanceRes] = await Promise.all([
+                        fetch(`${API_BASE_URL}/api/students`),
+                        fetch(`${API_BASE_URL}/api/attendance`)
+                    ]);
+
+                    if (!studentsRes.ok) throw new Error(`Failed to fetch students: ${studentsRes.statusText}`);
+                    if (!attendanceRes.ok) throw new Error(`Failed to fetch attendance: ${attendanceRes.statusText}`);
+
+                    STUDENTS = await studentsRes.json();
+                    attendanceData = await attendanceRes.json();
+
+                    consoleLog(`Data fetched: ${STUDENTS.length} students, ${Object.keys(attendanceData).length} dates.`);
+                    showToast("Data loaded successfully", "success", 1500);
+                    return true; // Indicate success
+
+                 } catch (error) {
+                    console.error("Error fetching data:", error);
+                    showError("attendance-error", `Failed to load data from server: ${error.message}`, true);
+                    showToast("Error loading data", "error", 5000);
+                    STUDENTS = []; // Reset on error
+                    attendanceData = {}; // Reset on error
+                    return false; // Indicate failure
+                 } finally {
+                    showLoading(false);
+                 }
+            }
+
+            // --- Attendance Page Functions ---
+            function initAttendanceTable() {
+                attendanceTbody.innerHTML = ""; // Clear existing rows
+                if (!STUDENTS || STUDENTS.length === 0) {
+                     attendanceTbody.innerHTML = '<tr><td colspan="3">No student data loaded. Cannot display table.</td></tr>';
+                     consoleLog("Cannot init table, no student data.");
+                     return;
+                }
+                STUDENTS.forEach(student => {
+                    const row = document.createElement('tr');
+                    // Status is now a span, not a select
+                    row.innerHTML = `
+                        <td data-label="Roll No">${student.roll_no}</td>
+                        <td data-label="Name">${student.name}</td>
+                        <td data-label="Status">
+                            <span class="status-display" data-roll="${student.roll_no}">-</span>
+                        </td>
+                    `;
+                    attendanceTbody.appendChild(row);
+                });
+                consoleLog("Attendance table structure initialized.");
+            }
+
+            function loadAttendance(date) {
+                // No loading indicator here, data is already fetched
+                consoleLog(`Displaying attendance for date: ${date}`);
+
+                if (!STUDENTS || STUDENTS.length === 0) {
+                    showError("attendance-error", "Student list not loaded.", true);
+                    return;
+                }
+                 if (!date) {
+                    showToast("Select a date to view attendance.", "info");
+                    // Clear statuses
+                    attendanceTbody.querySelectorAll('.status-display').forEach(span => {
+                        span.textContent = '-';
+                        span.className = 'status-display status-unknown';
+                    });
+                    return;
+                 }
+
+                showError("attendance-error", "", false); // Clear errors
+
+                const dateData = attendanceData[date] || []; // Get data for the specific date from cache
+                const attendanceMap = new Map(dateData.map(item => [item.roll_no, item.status]));
+
+                STUDENTS.forEach(student => {
+                    const statusSpan = attendanceTbody.querySelector(`.status-display[data-roll="${student.roll_no}"]`);
+                    if (statusSpan) {
+                        const status = attendanceMap.get(student.roll_no);
+                        if (status === "present") {
+                            statusSpan.textContent = "Present";
+                            statusSpan.className = "status-display status-present";
+                        } else if (status === "absent") {
+                            statusSpan.textContent = "Absent";
+                            statusSpan.className = "status-display status-absent";
+                        } else {
+                            // No record found for this student on this date
+                            statusSpan.textContent = "No Record";
+                            statusSpan.className = "status-display status-unknown";
+                        }
+                    } else {
+                         consoleLog(`Warning: Could not find status span for roll_no ${student.roll_no}`);
+                    }
+                });
+
+                 if (dateData.length > 0) {
+                    showToast(`Showing attendance for ${date}`, "info", 1500);
+                 } else {
+                    showToast(`No attendance record found for ${date}`, "info", 1500);
+                 }
+            }
+
+             function updateDateHistory() {
+                dateHistoryElement.innerHTML = ""; // Clear existing chips
+                const dates = Object.keys(attendanceData).sort().reverse(); // Sort newest first
+
+                dates.forEach(date => {
+                    const chip = document.createElement('div');
+                    chip.className = 'date-chip';
+                    chip.textContent = date;
+                    chip.dataset.date = date;
+                    chip.addEventListener('click', () => loadAttendanceForDate(date));
+                    dateHistoryElement.appendChild(chip);
+                });
+
+                highlightActiveDateChip(); // Ensure correct chip is highlighted
+            }
+
+            function highlightActiveDateChip() {
+                 const currentDate = attendanceDateInput.value;
+                 document.querySelectorAll(".date-chip").forEach(chip => {
+                     chip.classList.toggle("active", chip.dataset.date === currentDate);
+                 });
+            }
+
+            function loadAttendanceForDate(date) {
+                consoleLog(`Date chip clicked: ${date}`);
+                attendanceDateInput.value = date;
+                highlightActiveDateChip();
+                loadAttendance(date); // Display data for this date from cache
+            }
+
+
+            // --- Metrics Page Functions (Logic remains similar, uses fetched data) ---
+            function updateMetrics() {
+                consoleLog("Updating metrics...");
+                // Ensure data is loaded
+                if (!STUDENTS || STUDENTS.length === 0) {
+                    consoleLog("Cannot update metrics, no student data.");
+                    totalClassesElement.textContent = "0";
+                    avgAttendanceElement.textContent = "N/A";
+                    bestDayElement.textContent = "-";
+                    worstDayElement.textContent = "-";
+                    metricsTbody.innerHTML = '<tr><td colspan="5">Student data not available.</td></tr>';
+                    destroyChart("attendance_chart");
+                    return;
+                }
+
+                const dates = Object.keys(attendanceData);
+                const totalClasses = dates.length;
+                totalClassesElement.textContent = totalClasses.toString();
+
+                if (totalClasses === 0) {
+                    avgAttendanceElement.textContent = "0%";
+                    bestDayElement.textContent = "-";
+                    worstDayElement.textContent = "-";
+                    metricsTbody.innerHTML = '<tr><td colspan="5">No attendance data recorded yet.</td></tr>';
+                    destroyChart("attendance_chart");
+                    return;
+                }
+
+                let studentMetrics = {};
+                STUDENTS.forEach(s => {
+                    studentMetrics[s.roll_no] = { name: s.name, present: 0, absent: 0, total: 0 };
+                });
+
+                let dailyRates = {};
+                let allDatesSorted = dates.sort();
+
+                allDatesSorted.forEach(date => {
+                    const attendanceList = attendanceData[date] || [];
+                    let presentCount = 0;
+                    let validEntriesCount = 0; // Count entries for students *currently* in the list
+
+                    // Map current students for quick lookup
+                    const currentStudentRolls = new Set(STUDENTS.map(s => s.roll_no));
+
+                    attendanceList.forEach(entry => {
+                        if (currentStudentRolls.has(entry.roll_no)) { // Only count if student exists
+                             validEntriesCount++;
+                             const rollNo = entry.roll_no;
+                             studentMetrics[rollNo].total++;
+                             if (entry.status === "present") {
+                                studentMetrics[rollNo].present++;
+                                presentCount++;
+                             } else if (entry.status === "absent") {
+                                studentMetrics[rollNo].absent++;
+                             }
+                        }
+                    });
+                    // Base daily rate on the number of *currently active* students for consistency
+                    // Or base it on validEntriesCount if you only want % of *marked* students that day
+                    const denominator = STUDENTS.length > 0 ? STUDENTS.length : 1; // Avoid division by zero
+                    dailyRates[date] = (presentCount / denominator) * 100;
+                    // Alternative: dailyRates[date] = validEntriesCount > 0 ? (presentCount / validEntriesCount) * 100 : 0;
+
+                });
+
+                 // Calculate overall and best/worst day (same logic as before)
+                if (Object.keys(dailyRates).length > 0) {
+                    const rates = Object.values(dailyRates);
+                    const bestDayVal = Math.max(...rates);
+                    const worstDayVal = Math.min(...rates);
+                    const bestDayDate = Object.keys(dailyRates).find(d => dailyRates[d] === bestDayVal) || "-";
+                    const worstDayDate = Object.keys(dailyRates).find(d => dailyRates[d] === worstDayVal) || "-";
+
+                    bestDayElement.textContent = `${bestDayDate} (${bestDayVal.toFixed(1)}%)`;
+                    worstDayElement.textContent = `${worstDayDate} (${worstDayVal.toFixed(1)}%)`;
+                } else {
+                    bestDayElement.textContent = "-";
+                    worstDayElement.textContent = "-";
+                }
+
+                let totalPresentOverall = 0;
+                let totalPossibleAttendances = STUDENTS.length * totalClasses; // Total slots
+
+                 Object.values(studentMetrics).forEach(m => {
+                    totalPresentOverall += m.present;
+                    // Note: studentMetrics[roll].total reflects days the student *was marked*,
+                    // totalPossibleAttendances reflects total class days * student count.
+                    // Use totalPossibleAttendances for overall average relative to all classes held.
+                });
+
+                 const avgAttendanceOverall = totalPossibleAttendances > 0 ? (totalPresentOverall / totalPossibleAttendances) * 100 : 0;
+                 avgAttendanceElement.textContent = `${avgAttendanceOverall.toFixed(1)}%`;
+
+
+                // Update metrics table (same logic as before)
+                metricsTbody.innerHTML = ""; // Clear
+                if (STUDENTS.length === 0) {
+                     metricsTbody.innerHTML = '<tr><td colspan="5">No student data found.</td></tr>';
+                } else {
+                    Object.entries(studentMetrics).forEach(([rollNo, metrics]) => {
+                        // Calculate percentage based on total classes held, not just days marked
+                        const attendancePercent = totalClasses > 0 ? (metrics.present / totalClasses) * 100 : 0;
+                        let percentClass = "poor";
+                        if (attendancePercent >= 90) percentClass = "excellent";
+                        else if (attendancePercent >= 75) percentClass = "good";
+                        else if (attendancePercent >= 60) percentClass = "average";
+
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td data-label="Roll No">${rollNo}</td>
+                            <td data-label="Name">${metrics.name}</td>
+                            <td data-label="Present">${metrics.present}</td>
+                            <td data-label="Absent">${totalClasses - metrics.present}</td> {/* Calculated absent */}
+                            <td data-label="Attend %" class="${percentClass}">${attendancePercent.toFixed(1)}%</td>
+                        `;
+                        metricsTbody.appendChild(row);
+                    });
+                 }
+
+                updateAttendanceChart(dailyRates); // Update trend chart
+                consoleLog("Metrics updated successfully.");
+            }
+
+            // --- Rankings Page Functions (Logic remains similar, uses fetched data) ---
+            function updateRankings() {
+                consoleLog("Updating rankings...");
+                 if (!STUDENTS || STUDENTS.length === 0) {
+                    consoleLog("Cannot update rankings, no student data.");
+                    rankingTbody.innerHTML = '<tr><td colspan="4">Student data not available.</td></tr>';
+                    destroyChart("distribution_chart");
+                    return;
+                }
+
+                const dates = Object.keys(attendanceData);
+                const totalClasses = dates.length;
+
+                if (totalClasses === 0) {
+                    rankingTbody.innerHTML = '<tr><td colspan="4">No attendance data recorded yet.</td></tr>';
+                    destroyChart("distribution_chart");
+                    return;
+                }
+
+                 let studentSummary = STUDENTS.map(student => {
+                    const rollNo = student.roll_no;
+                    let presentCount = 0;
+
+                    // Count present days directly from attendanceData
+                    dates.forEach(date => {
+                        const attendanceList = attendanceData[date] || [];
+                        const entry = attendanceList.find(e => e.roll_no === rollNo);
+                        if (entry && entry.status === "present") {
+                            presentCount++;
+                        }
+                    });
+
+                    // Percentage is based on total classes held
+                    const attendancePercent = totalClasses > 0 ? (presentCount / totalClasses) * 100 : 0;
+                    return {
+                        roll_no: rollNo,
+                        name: student.name,
+                        attendance_percent: attendancePercent,
+                        present: presentCount,
+                        total_classes: totalClasses // Use total classes for context
+                    };
+                });
+
+                // Sort (same logic as before)
+                studentSummary.sort((a, b) => {
+                    if (b.attendance_percent !== a.attendance_percent) {
+                        return b.attendance_percent - a.attendance_percent;
+                    }
+                    return a.name.localeCompare(b.name);
+                });
+
+                // Update ranking table (same logic as before)
+                rankingTbody.innerHTML = ""; // Clear
+                let currentRank = 0;
+                let lastPercent = -1;
+                let studentsAtRank = 0;
+
+                studentSummary.forEach((summary) => {
+                    const percent = summary.attendance_percent;
+
+                     if (percent !== lastPercent) {
+                        currentRank += (studentsAtRank + 1);
+                        studentsAtRank = 0;
+                        lastPercent = percent;
+                    } else {
+                        studentsAtRank++;
+                    }
+
+                    let rankClass = "poor";
+                    if (percent >= 90) rankClass = "excellent";
+                    else if (percent >= 75) rankClass = "good";
+                    else if (percent >= 60) rankClass = "average";
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td data-label="Rank">${currentRank}</td>
+                        <td data-label="Roll No">${summary.roll_no}</td>
+                        <td data-label="Name">${summary.name}</td>
+                        <td data-label="Attend %" class="${rankClass}">${percent.toFixed(1)}%</td>
+                    `;
+                    rankingTbody.appendChild(row);
+                });
+
+
+                updateDistributionChart(studentSummary); // Update pie chart
+                consoleLog("Rankings updated successfully.");
+            }
+
+            // --- Chart Update Functions (Unchanged logic, just ensure data source is correct) ---
             function destroyChart(chartId) {
                 if (attendanceCharts[chartId]) {
                     try {
                         attendanceCharts[chartId].destroy();
                         attendanceCharts[chartId] = null;
+                        consoleLog(`Chart '${chartId}' destroyed.`);
                     } catch (e) {
-                        console.error(`Error destroying chart '${chartId}': ${e}`);
+                        consoleLog(`Error destroying chart '${chartId}': ${e}`);
                     }
                 }
             }
 
-            // --- API Fetch Wrapper ---
-            async function fetchData(url, options = {}) {
-                showLoading(true);
-                try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) {
-                        let errorMsg = `HTTP error! status: ${response.status}`;
-                        try {
-                            const errData = await response.json();
-                            errorMsg += `: ${errData.message || 'Unknown server error'}`;
-                        } catch (e) { /* Ignore if response is not JSON */ }
-                        throw new Error(errorMsg);
-                    }
-                    return await response.json();
-                } catch (error) {
-                    console.error(`Fetch error for ${url}:`, error);
-                    showToast(`Error fetching data: ${error.message}`, "error", 5000);
-                    throw error; // Re-throw for caller handling
-                } finally {
-                    showLoading(false);
-                }
-            }
-
-            // --- Data Loading and Display ---
-
-            async function fetchStudents() {
-                try {
-                     currentStudents = await fetchData('/api/students');
-                     console.log("Fetched students:", currentStudents.length);
-                } catch (error) {
-                    showError('attendance-error', 'Failed to load student list. Cannot display attendance.', true);
-                    currentStudents = []; // Clear student list on error
-                }
-            }
-
-            function buildAttendanceTableStructure() {
-                attendanceTbody.innerHTML = ""; // Clear existing rows
-                if (!currentStudents || currentStudents.length === 0) {
-                     attendanceTbody.innerHTML = '<tr><td colspan="3">No student list available.</td></tr>';
-                     return;
-                }
-                currentStudents.forEach(student => {
-                    const row = document.createElement('tr');
-                    row.dataset.roll = student.roll_no;
-                    row.innerHTML = `
-                        <td data-label="Roll No">${student.roll_no}</td>
-                        <td data-label="Name">${student.name}</td>
-                        <td data-label="Status" class="status-cell">-</td> <!-- Placeholder status -->
-                    `;
-                    attendanceTbody.appendChild(row);
-                });
-            }
-
-
-            async function loadAttendance(date) {
-                if (!date) {
-                    showToast("Please select a date to view.", "info");
-                    attendanceTbody.querySelectorAll('.status-cell').forEach(cell => {
-                         cell.textContent = '-';
-                         cell.className = 'status-cell';
-                    });
-                    return;
-                }
-                 if (!currentStudents || currentStudents.length === 0) {
-                     showError('attendance-error', 'Student list not loaded. Cannot display attendance.', true);
-                     return;
-                 }
-
-                console.log(`Fetching attendance for date: ${date}`);
-                showError('attendance-error', '', false);
-
-                try {
-                    const dateData = await fetchData(`/api/attendance/${date}`);
-
-                    attendanceTbody.querySelectorAll('.status-cell').forEach(cell => {
-                         cell.textContent = 'N/A';
-                         cell.className = 'status-cell status-unknown';
-                    });
-
-
-                    if (dateData && dateData.length > 0) {
-                        dateData.forEach(studentAttendance => {
-                            const rollNo = studentAttendance.roll_no;
-                            const status = studentAttendance.status;
-                            const row = attendanceTbody.querySelector(`tr[data-roll="${rollNo}"]`);
-                            if (row) {
-                                const statusCell = row.querySelector('.status-cell');
-                                if (statusCell) {
-                                    statusCell.textContent = status === 'present' ? 'Present' : 'Absent';
-                                    statusCell.className = `status-cell status-${status}`;
-                                }
-                            } else {
-                                console.warn(`Attendance data found for non-existent student roll no: ${rollNo} on date ${date}`);
-                            }
-                        });
-                    } else {
-                         showToast(`No attendance record found for ${date}.`, "info", 2000);
-                    }
-                } catch (error) {
-                    showError('attendance-error', `Failed to load attendance for ${date}.`, true);
-                    attendanceTbody.querySelectorAll('.status-cell').forEach(cell => {
-                         cell.textContent = 'Error';
-                         cell.className = 'status-cell status-absent';
-                    });
-                }
-            }
-
-            async function updateDateHistory() {
-                dateHistoryElement.innerHTML = "";
-                try {
-                    const dates = await fetchData('/api/attendance/dates');
-                    if (dates && dates.length > 0) {
-                        dates.forEach(date => {
-                            const chip = document.createElement('div');
-                            chip.className = 'date-chip';
-                            chip.textContent = date;
-                            chip.dataset.date = date;
-                            chip.addEventListener('click', () => loadAttendanceForDate(date));
-                            dateHistoryElement.appendChild(chip);
-                        });
-                    } else {
-                        dateHistoryElement.innerHTML = '<p>No attendance records yet.</p>';
-                    }
-                    highlightActiveDateChip();
-                } catch (error) {
-                    dateHistoryElement.innerHTML = '<p style="color: var(--red-color);">Failed to load date history.</p>';
-                }
-            }
-
-             function highlightActiveDateChip() {
-                 const currentDate = attendanceDateInput.value;
-                 document.querySelectorAll(".date-chip").forEach(chip => {
-                     chip.classList.toggle("active", chip.dataset.date === currentDate);
-                 });
-             }
-
-            function loadAttendanceForDate(date) {
-                console.log(`Date chip clicked: ${date}`);
-                attendanceDateInput.value = date;
-                highlightActiveDateChip();
-                loadAttendance(date);
-            }
-
-            // --- Metrics Page Functions ---
-            async function updateMetrics() {
-                console.log("Updating metrics view...");
-                totalClassesElement.textContent = "0";
-                avgAttendanceElement.textContent = "0%";
-                bestDayElement.textContent = "-";
-                worstDayElement.textContent = "-";
-                metricsTbody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
-                destroyChart("attendance_chart");
-
-                try {
-                    const overallMetrics = await fetchData('/api/metrics');
-                    totalClassesElement.textContent = overallMetrics.totalClasses || "0";
-                    avgAttendanceElement.textContent = overallMetrics.avgAttendance || "0%";
-                    bestDayElement.textContent = overallMetrics.bestDay || "-";
-                    worstDayElement.textContent = overallMetrics.worstDay || "-";
-
-                     if (overallMetrics.dailyRates && Object.keys(overallMetrics.dailyRates).length > 0) {
-                        updateAttendanceChart(overallMetrics.dailyRates);
-                     } else {
-                         const canvas = document.getElementById("attendance-chart");
-                         if(canvas) {
-                             const ctx = canvas.getContext("2d");
-                             ctx.clearRect(0, 0, canvas.width, canvas.height);
-                         }
-                     }
-
-                    const studentMetricsData = await fetchData('/api/metrics/students');
-                    metricsTbody.innerHTML = "";
-
-                    if (studentMetricsData && studentMetricsData.length > 0) {
-                        studentMetricsData.forEach(metrics => {
-                            const attendancePercent = parseFloat(metrics.attendance_percent);
-                            let percentClass = "poor";
-                            if (attendancePercent >= 90) percentClass = "excellent";
-                            else if (attendancePercent >= 75) percentClass = "good";
-                            else if (attendancePercent >= 60) percentClass = "average";
-
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td data-label="Roll No">${metrics.roll_no}</td>
-                                <td data-label="Name">${metrics.name}</td>
-                                <td data-label="Present">${metrics.present}</td>
-                                <td data-label="Absent">${metrics.absent}</td>
-                                <td data-label="Attend %" class="${percentClass}">${metrics.attendance_percent}%</td>
-                            `;
-                            metricsTbody.appendChild(row);
-                        });
-                    } else {
-                        metricsTbody.innerHTML = '<tr><td colspan="5">No detailed student metrics available.</td></tr>';
-                    }
-                     console.log("Metrics view updated.");
-
-                } catch (error) {
-                    console.error("Error updating metrics view:", error);
-                    metricsTbody.innerHTML = `<tr><td colspan="5" style="color: var(--red-color);">Failed to load metrics data.</td></tr>`;
-                    destroyChart("attendance_chart");
-                }
-            }
-
-             // --- Rankings Page Functions ---
-            async function updateRankings() {
-                console.log("Updating rankings view...");
-                rankingTbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
-                destroyChart("distribution_chart");
-
-                try {
-                    const rankingData = await fetchData('/api/rankings');
-                    rankingTbody.innerHTML = "";
-
-                    if (rankingData && rankingData.length > 0) {
-                         rankingData.forEach(summary => {
-                            const percent = parseFloat(summary.attendance_percent);
-                            let rankClass = "poor";
-                            if (percent >= 90) rankClass = "excellent";
-                            else if (percent >= 75) rankClass = "good";
-                            else if (percent >= 60) rankClass = "average";
-
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td data-label="Rank">${summary.rank}</td>
-                                <td data-label="Roll No">${summary.roll_no}</td>
-                                <td data-label="Name">${summary.name}</td>
-                                <td data-label="Attend %" class="${rankClass}">${summary.attendance_percent}%</td>
-                            `;
-                            rankingTbody.appendChild(row);
-                        });
-                         updateDistributionChart(rankingData);
-
-                    } else {
-                        rankingTbody.innerHTML = '<tr><td colspan="4">No ranking data available.</td></tr>';
-                        const canvas = document.getElementById("distribution-chart");
-                        if(canvas) {
-                            const ctx = canvas.getContext("2d");
-                            ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        }
-                    }
-                    console.log("Rankings view updated.");
-
-                } catch (error) {
-                    console.error("Error updating rankings view:", error);
-                    rankingTbody.innerHTML = `<tr><td colspan="4" style="color: var(--red-color);">Failed to load ranking data.</td></tr>`;
-                    destroyChart("distribution_chart");
-                }
-            }
-
-            // --- Chart Update Functions ---
             function updateAttendanceChart(dailyRates) {
-                const chartId = "attendance_chart";
-                const canvasId = "attendance-chart";
-                destroyChart(chartId);
+                 consoleLog("Updating attendance trend chart...");
+                 const chartId = "attendance_chart";
+                 const canvasId = "attendance-chart";
+                 destroyChart(chartId);
 
-                if (!dailyRates || Object.keys(dailyRates).length === 0) {
-                    console.log("No data for attendance chart.");
+                 if (!dailyRates || Object.keys(dailyRates).length === 0) {
+                    consoleLog("No data for attendance chart.");
+                    // Optionally display a message on the canvas
+                     const canvas = document.getElementById(canvasId);
+                     if(canvas) {
+                         const ctx = canvas.getContext("2d");
+                         ctx.clearRect(0, 0, canvas.width, canvas.height);
+                         ctx.textAlign = 'center';
+                         ctx.fillText('No attendance data to display.', canvas.width / 2, canvas.height / 2);
+                     }
                     return;
-                }
+                 }
 
                 try {
                     const sortedDates = Object.keys(dailyRates).sort();
                     const attendanceRates = sortedDates.map(date => dailyRates[date]);
+
                     const canvas = document.getElementById(canvasId);
-                    if (!canvas) return;
+                    if (!canvas) {
+                        consoleLog(`Error: Canvas element '${canvasId}' not found.`);
+                        return;
+                    }
                     const ctx = canvas.getContext("2d");
 
                     attendanceCharts[chartId] = new Chart(ctx, {
                         type: "line",
-                        data: {
+                        data: { /* ... same as original ... */
                              labels: sortedDates,
-                             datasets: [{
+                            datasets: [{
                                 label: "Daily Attendance Rate (%)",
                                 data: attendanceRates,
                                 backgroundColor: "rgba(74, 144, 226, 0.15)",
@@ -937,9 +1098,9 @@
                                 pointBackgroundColor: "rgba(74, 144, 226, 1)",
                                 pointRadius: 4,
                                 pointHoverRadius: 6
-                             }]
+                            }]
                         },
-                        options: {
+                        options: { /* ... same as original ... */
                             responsive: true,
                             maintainAspectRatio: false,
                             scales: {
@@ -959,26 +1120,35 @@
                             interaction: { mode: 'index', intersect: false }
                         }
                     });
-                } catch (e) {
-                    console.error(`Error updating attendance chart: ${e}`);
+                    consoleLog("Attendance chart updated.");
+                 } catch (e) {
+                    consoleLog(`Error updating attendance chart: ${e}`);
                     showToast("Could not display attendance trend chart", "error");
-                }
+                 }
             }
 
-            function updateDistributionChart(rankingData) {
-                const chartId = "distribution_chart";
-                const canvasId = "distribution-chart";
-                destroyChart(chartId);
+            function updateDistributionChart(studentSummary) {
+                 consoleLog("Updating attendance distribution chart...");
+                 const chartId = "distribution_chart";
+                 const canvasId = "distribution-chart";
+                 destroyChart(chartId);
 
-                if (!rankingData || rankingData.length === 0) {
-                    console.log("No data for distribution chart.");
+                 if (!studentSummary || studentSummary.length === 0) {
+                    consoleLog("No data for distribution chart.");
+                     const canvas = document.getElementById(canvasId);
+                     if(canvas) {
+                         const ctx = canvas.getContext("2d");
+                         ctx.clearRect(0, 0, canvas.width, canvas.height);
+                         ctx.textAlign = 'center';
+                         ctx.fillText('No student data to display distribution.', canvas.width / 2, canvas.height / 2);
+                     }
                     return;
-                }
+                 }
 
                 try {
                     const ranges = { "Excellent (>=90%)": 0, "Good (75-89%)": 0, "Average (60-74%)": 0, "Poor (<60%)": 0 };
-                    rankingData.forEach(summary => {
-                        const percent = parseFloat(summary.attendance_percent);
+                    studentSummary.forEach(summary => {
+                        const percent = summary.attendance_percent;
                         if (percent >= 90) ranges["Excellent (>=90%)"]++;
                         else if (percent >= 75) ranges["Good (75-89%)"]++;
                         else if (percent >= 60) ranges["Average (60-74%)"]++;
@@ -986,8 +1156,13 @@
                     });
 
                     const canvas = document.getElementById(canvasId);
-                    if (!canvas) return;
+                     if (!canvas) {
+                        consoleLog(`Error: Canvas element '${canvasId}' not found.`);
+                        return;
+                    }
                     const ctx = canvas.getContext("2d");
+
+                     // Use CSS variable values or fallbacks (same as original)
                     const computedStyle = getComputedStyle(document.documentElement);
                     const colors = [
                         computedStyle.getPropertyValue('--green-color').trim() || 'rgba(6, 214, 160, 0.85)',
@@ -998,18 +1173,18 @@
 
                     attendanceCharts[chartId] = new Chart(ctx, {
                         type: "pie",
-                        data: {
+                        data: { /* ... same as original ... */
                              labels: Object.keys(ranges),
-                             datasets: [{
+                            datasets: [{
                                 label: "Number of Students",
                                 data: Object.values(ranges),
                                 backgroundColor: colors,
                                 borderColor: "rgba(255, 255, 255, 0.7)",
                                 borderWidth: 1.5
-                             }]
+                            }]
                         },
-                        options: {
-                            responsive: true,
+                        options: { /* ... same as original ... */
+                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
                                 legend: {
@@ -1029,35 +1204,39 @@
                             }
                         }
                     });
+                    consoleLog("Distribution chart updated.");
                 } catch (e) {
-                    console.error(`Error updating distribution chart: ${e}`);
+                    consoleLog(`Error updating distribution chart: ${e}`);
                     showToast("Could not display distribution chart", "error");
-                }
+                 }
             }
 
-            // --- Navigation ---
+            // --- Navigation (Unchanged logic) ---
             function switchPage(targetPageId) {
-                if (targetPageId === currentPage) return;
-                console.log(`Switching page to ${targetPageId}`);
+                 if (targetPageId === currentPage) return;
+                 consoleLog(`Switching page from ${currentPage} to ${targetPageId}`);
 
-                Object.values(pageIds).forEach(pageDomId => {
+                 Object.values(pageIds).forEach(pageDomId => {
                     document.getElementById(pageDomId)?.classList.toggle("active", pageDomId === pageIds[targetPageId]);
-                });
-                navItems.forEach(item => {
+                 });
+
+                 navItems.forEach(item => {
                     item.classList.toggle("active", item.dataset.page === targetPageId);
-                });
+                 });
 
-                currentPage = targetPageId;
-                updateHighlight();
+                 currentPage = targetPageId;
+                 updateHighlight();
 
-                if (targetPageId === "metrics") {
+                 // Update data for the new page if needed (data is already fetched)
+                 if (targetPageId === "metrics") {
                     updateMetrics();
-                } else if (targetPageId === "ranking") {
+                 } else if (targetPageId === "ranking") {
                     updateRankings();
-                } else if (targetPageId === "attendance") {
-                     updateDateHistory();
-                     highlightActiveDateChip();
-                }
+                 } else if (targetPageId === "attendance") {
+                    // Refresh history/highlight in case data changed via admin
+                    updateDateHistory();
+                    loadAttendance(attendanceDateInput.value);
+                 }
             }
 
             function onNavClick(event) {
@@ -1065,7 +1244,7 @@
                 if (targetPage) switchPage(targetPage);
             }
 
-             function updateHighlight() {
+            function updateHighlight() {
                 const activeNav = document.querySelector(".nav-item.active");
                 if (activeNav && highlightElement) {
                     highlightElement.style.left = `${activeNav.offsetLeft}px`;
@@ -1078,40 +1257,56 @@
             // --- Event Handlers ---
             function onDateChange(event) {
                 const date = event.target.value;
-                console.log(`Date changed to: ${date}`);
-                loadAttendance(date);
+                consoleLog(`Date changed to: ${date}`);
+                loadAttendance(date); // Display data from cache
                 highlightActiveDateChip();
-                showError("attendance-error", "", false);
             }
 
             // --- Initialization ---
-            async function initApp() {
-                console.log("Initializing Student Attendance View (JS)...");
-                showLoading(true);
-
-                const today = getTodayDate();
-                attendanceDateInput.value = today;
-                attendanceDateInput.max = today;
-
+            function initEventListeners() {
                 navItems.forEach(item => item.addEventListener('click', onNavClick));
                 attendanceDateInput.addEventListener('change', onDateChange);
                 window.addEventListener('resize', updateHighlight);
+                consoleLog("Event listeners initialized.");
+            }
+
+             async function initApp() {
+                consoleLog("Initializing Frontend Attendance View...");
+                showLoading(true);
+                initEventListeners(); // Set up listeners early
 
                 try {
-                     await fetchStudents();
-                     buildAttendanceTableStructure();
-                     await updateDateHistory();
-                     await loadAttendance(today);
-                    setTimeout(updateHighlight, 150);
-                    showToast("Attendance view ready", "success", 1500);
+                    // 1. Fetch all necessary data from the server
+                    const dataLoaded = await fetchData();
+
+                    if (dataLoaded) {
+                        // 2. Initialize UI elements that depend on fetched data
+                        initAttendanceTable(); // Needs STUDENTS
+                        updateDateHistory(); // Needs attendanceData keys
+
+                        // 3. Set default date and display its data
+                        const today = getTodayDate();
+                        attendanceDateInput.value = today;
+                        attendanceDateInput.max = today; // Prevent future dates
+                        consoleLog(`Set date to today: ${today}`);
+                        loadAttendance(today); // Display today's data from cache
+
+                        // 4. Set initial highlight position
+                        setTimeout(updateHighlight, 150);
+
+                        showToast("Attendance system ready", "success", 2000);
+                    } else {
+                         // Error handled in fetchData, maybe disable date input?
+                         attendanceDateInput.disabled = true;
+                         showError("attendance-error", "Application could not load necessary data. Please try refreshing.", true);
+                    }
 
                 } catch (e) {
-                    console.error(`Critical Error during app initialization: ${e}`);
-                    showToast("Error initializing application!", "error", 5000);
-                     showError('attendance-error', `Initialization failed: ${e.message}`, true);
-                    if (contentElement) {
-                         contentElement.innerHTML = `<h1>Initialization Error</h1><p>Could not start the application. Please check the console (F12) for details.</p><p>Error: ${e.message}</p>`;
-                    }
+                     console.error(`Critical Error during app initialization: ${e}`);
+                     showToast("Error initializing application!", "error", 5000);
+                     if (contentElement) {
+                        contentElement.innerHTML = `<h1>Initialization Error</h1><p>Could not start the application. Please check the console (F12) for details or try refreshing.</p><p>Error: ${e.message}</p>`;
+                     }
                 } finally {
                     showLoading(false);
                 }
@@ -1120,8 +1315,7 @@
             // --- Start the application ---
             initApp();
 
-        });
-        // Embedded JavaScript End
+        }); // End DOMContentLoaded
     </script>
 </body>
 </html>
